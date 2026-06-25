@@ -1,0 +1,19 @@
+{
+  "$schema": "../extension.schema.json",
+  "id": "com.enterscry.mirage",
+  "name": "Mirage",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Social video studio — clip timeline, captions/subtitles, and one-click export presets for TikTok, Reels, Shorts, YouTube and more.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["desktop.dock"],
+  "panel": {
+    "width": 1280,
+    "height": 820,
+    "resizable": true
+  },
+  "permissions": ["downloads"],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

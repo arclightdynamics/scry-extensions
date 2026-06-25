@@ -1,0 +1,19 @@
+{
+  "$schema": "../extension.schema.json",
+  "id": "com.enterscry.clock",
+  "name": "World Clock",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Live time across a few time zones, on your desktop.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["desktop.dock"],
+  "panel": {
+    "width": 320,
+    "height": 360,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

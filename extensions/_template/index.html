@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Template Extension</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0e1a;
+        --fg: #e7ecf5;
+        --muted: #8a98b5;
+        --cyan: #22d3ee;
+        --magenta: #e879f9;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: radial-gradient(120% 120% at 0% 0%, #121a2e 0%, var(--bg) 60%);
+        color: var(--fg);
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 20px;
+      }
+      h1 { margin: 0; font-size: 18px; letter-spacing: 0.2px; }
+      h1 .accent { color: var(--cyan); }
+      p { margin: 0; color: var(--muted); }
+      .card {
+        margin-top: auto;
+        border: 1px solid #ffffff14;
+        border-radius: 12px;
+        padding: 14px 16px;
+        background: #ffffff08;
+      }
+      code {
+        font-family: ui-monospace, "Cascadia Code", monospace;
+        color: var(--magenta);
+      }
+      button {
+        align-self: flex-start;
+        border: 1px solid var(--cyan);
+        background: transparent;
+        color: var(--cyan);
+        border-radius: 8px;
+        padding: 8px 14px;
+        font: inherit;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      button:hover { background: #22d3ee1a; }
+    </style>
+  </head>
+  <body>
+    <h1>✦ <span class="accent">Template</span> Extension</h1>
+    <p>
+      This is a Scry mini-app. It's a plain web page running in a sandboxed
+      frame. Edit <code>index.html</code> and <code>extension.json</code>, then
+      reload Scry.
+    </p>
+    <button id="ping">It works — click me</button>
+    <div class="card">
+      <p>
+        This sandbox intentionally has no direct host access. Persistence,
+        workspace control, terminals, and clipboard access arrive through
+        the host bridge -- see the extensions README.
+      </p>
+    </div>
+    <script>
+      const btn = document.getElementById("ping");
+      let n = 0;
+      const render = () => (btn.textContent = n ? `Clicked ${n}×` : "It works — click me");
+      render();
+      btn.addEventListener("click", () => {
+        n += 1;
+        render();
+      });
+    </script>
+  </body>
+</html>

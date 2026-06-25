@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>World Clock</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0e1a;
+        --fg: #e7ecf5;
+        --muted: #8a98b5;
+        --cyan: #22d3ee;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: radial-gradient(130% 130% at 50% 0%, #131c33 0%, var(--bg) 65%);
+        color: var(--fg);
+        font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        gap: 10px;
+      }
+      .big { text-align: center; }
+      .big .time {
+        font: 600 40px/1 ui-monospace, "Cascadia Code", monospace;
+        letter-spacing: 1px;
+        color: var(--cyan);
+        text-shadow: 0 0 18px #22d3ee55;
+      }
+      .big .zone { color: var(--muted); margin-top: 4px; font-size: 12px; }
+      ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+      li {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        border: 1px solid #ffffff12;
+        border-radius: 9px;
+        padding: 8px 12px;
+        background: #ffffff06;
+      }
+      li .city { color: var(--fg); }
+      li .t { font-family: ui-monospace, "Cascadia Code", monospace; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="big">
+      <div class="time" id="local">--:--:--</div>
+      <div class="zone" id="localzone">local</div>
+    </div>
+    <ul id="zones"></ul>
+    <script>
+      const ZONES = [
+        { city: "New York", tz: "America/New_York" },
+        { city: "London", tz: "Europe/London" },
+        { city: "Berlin", tz: "Europe/Berlin" },
+        { city: "Tokyo", tz: "Asia/Tokyo" },
+      ];
+      const fmt = (tz) =>
+        new Intl.DateTimeFormat([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+          timeZone: tz,
+        });
+      const localFmt = fmt(undefined);
+      const list = document.getElementById("zones");
+      const rows = ZONES.map((z) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="city">${z.city}</span><span class="t"></span>`;
+        list.appendChild(li);
+        return { ...z, el: li.querySelector(".t"), f: fmt(z.tz) };
+      });
+      const localEl = document.getElementById("local");
+      document.getElementById("localzone").textContent =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
+      function tick() {
+        const now = new Date();
+        localEl.textContent = localFmt.format(now);
+        for (const r of rows) r.el.textContent = r.f.format(now);
+      }
+      tick();
+      setInterval(tick, 1000);
+    </script>
+  </body>
+</html>

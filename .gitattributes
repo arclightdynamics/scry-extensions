@@ -1,0 +1,11 @@
+# Normalize line endings: extensions are served as-is to a webview, so keep
+# text files LF in the repo regardless of contributor OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.zip binary

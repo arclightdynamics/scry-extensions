@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Imago — Image Editor</title>
+    <link rel="stylesheet" href="imago.css" />
+  </head>
+  <body>
+    <div class="sg-app">
+      <!-- ===================== menu bar ===================== -->
+      <div class="sg-menubar">
+        <span class="sg-brand">
+          <span class="dot"></span>IMAGO <small>image editor</small>
+        </span>
+        <div class="sg-menu">
+          <button data-act="new" title="New image (Ctrl+N)">New</button>
+          <button data-act="open" title="Open an image file (Ctrl+O)">Open</button>
+          <button data-act="paste" title="Paste image from clipboard (Ctrl+V)">Paste</button>
+          <button data-act="export" title="Export / copy image (Ctrl+S)">Export</button>
+        </div>
+        <span style="width: 14px"></span>
+        <div class="sg-menu">
+          <button data-act="undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+          <button data-act="redo" title="Redo (Ctrl+Y)">↷ Redo</button>
+        </div>
+        <span style="width: 14px"></span>
+        <div class="sg-menu">
+          <button data-act="img-resize" title="Resize image…">Resize</button>
+          <button data-act="img-crop" title="Crop to selection">Crop</button>
+          <button data-act="img-rccw" title="Rotate 90° counter-clockwise">⟲</button>
+          <button data-act="img-rcw" title="Rotate 90° clockwise">⟳</button>
+          <button data-act="img-flh" title="Flip horizontal">⇋</button>
+          <button data-act="img-flv" title="Flip vertical">⤡</button>
+        </div>
+        <span class="sg-spacer"></span>
+        <div class="sg-zoom">
+          <button data-act="zoom-fit" title="Fit">⤢</button>
+          <button data-act="zoom-out" title="Zoom out">−</button>
+          <span class="pct" id="sg-zoom-pct">100%</span>
+          <button data-act="zoom-in" title="Zoom in">+</button>
+          <button data-act="zoom-100" title="100%">1:1</button>
+        </div>
+      </div>
+
+      <!-- ===================== body ===================== -->
+      <div class="sg-body">
+        <!-- tool rail -->
+        <div class="sg-tools" id="sg-tools"></div>
+
+        <!-- canvas stage -->
+        <div class="sg-stagewrap" id="sg-stagewrap">
+          <div class="sg-stage" id="sg-stage">
+            <canvas id="sg-composite"></canvas>
+            <canvas id="sg-overlay" class="overlay"></canvas>
+          </div>
+        </div>
+
+        <!-- right panels -->
+        <div class="sg-panels">
+          <!-- color -->
+          <div class="sg-panel">
+            <h3>Color</h3>
+            <div class="sg-colors">
+              <div class="sg-swatches">
+                <div class="sg-swatch fg" id="sg-fg" title="Foreground"></div>
+                <div class="sg-swatch bg" id="sg-bg" title="Background"></div>
+              </div>
+              <button class="sg-swap" id="sg-swap" title="Swap (X)">⇄</button>
+              <input type="color" id="sg-colorpick" style="width: 40px; height: 40px; background: none; border: none; cursor: pointer" />
+            </div>
+            <div class="sg-row">
+              <label>Hex</label>
+              <input type="text" id="sg-hex" maxlength="7" style="flex: 1" />
+            </div>
+            <div class="sg-palette" id="sg-palette"></div>
+          </div>
+
+          <!-- tool options -->
+          <div class="sg-panel">
+            <h3>Tool <span id="sg-tool-name" style="color: var(--cyan)"></span></h3>
+            <div class="sg-row">
+              <label>Size</label>
+              <input type="range" id="sg-size" min="1" max="400" value="14" />
+              <span class="val" id="sg-size-v">14</span>
+            </div>
+            <div class="sg-row">
+              <label>Opacity</label>
+              <input type="range" id="sg-opacity" min="1" max="100" value="100" />
+              <span class="val" id="sg-opacity-v">100</span>
+            </div>
+            <div class="sg-row" id="sg-shape-row">
+              <label>Fill</label>
+              <select id="sg-shape-fill" style="flex: 1">
+                <option value="fill">Filled</option>
+                <option value="stroke">Outline</option>
+              </select>
+            </div>
+            <div class="sg-row" id="sg-tol-row">
+              <label>Tolerance</label>
+              <input type="range" id="sg-tol" min="0" max="120" value="24" />
+              <span class="val" id="sg-tol-v">24</span>
+            </div>
+            <div class="sg-row" id="sg-font-row">
+              <label>Font</label>
+              <input type="number" id="sg-font" min="6" max="400" value="48" style="width: 60px" />
+              <select id="sg-font-fam" style="flex: 1">
+                <option>system-ui</option>
+                <option>Georgia</option>
+                <option>"Times New Roman"</option>
+                <option>"Courier New"</option>
+                <option>Impact</option>
+                <option>Arial</option>
+              </select>
+            </div>
+            <div class="sg-row" id="sg-aspect-row">
+              <label>Aspect</label>
+              <select id="sg-aspect" style="flex: 1" title="Lock the selection to a ratio, then Crop">
+                <option value="free">Free</option>
+                <option value="1">Square 1:1</option>
+                <option value="0.8">Portrait 4:5</option>
+                <option value="0.5625">Story 9:16</option>
+                <option value="1.7778">Wide 16:9</option>
+                <option value="1.5">Photo 3:2</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- layers -->
+          <div class="sg-panel">
+            <h3>
+              Layers
+              <span class="sg-layer-tools">
+                <button class="sg-btn" data-act="layer-add" title="New layer">＋</button>
+                <button class="sg-btn" data-act="layer-dup" title="Duplicate">⧉</button>
+                <button class="sg-btn" data-act="layer-up" title="Move up">▲</button>
+                <button class="sg-btn" data-act="layer-down" title="Move down">▼</button>
+                <button class="sg-btn" data-act="layer-merge" title="Merge down">⤓</button>
+                <button class="sg-btn" data-act="layer-del" title="Delete">🗑</button>
+              </span>
+            </h3>
+            <div class="sg-row">
+              <label>Opacity</label>
+              <input type="range" id="sg-layer-opacity" min="0" max="100" value="100" />
+              <span class="val" id="sg-layer-opacity-v">100</span>
+            </div>
+            <div class="sg-row">
+              <label>Blend</label>
+              <select id="sg-blend" style="flex: 1">
+                <option value="source-over">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="layer-mergevis" title="Merge all visible layers into one">Merge Visible</button>
+              <button class="sg-btn" data-act="layer-flatten" title="Flatten everything to a single layer">Flatten</button>
+            </div>
+            <div class="sg-layers" id="sg-layers"></div>
+          </div>
+
+          <!-- adjustments / filters -->
+          <div class="sg-panel">
+            <h3>Adjust &amp; Filter</h3>
+            <div class="sg-row">
+              <label>Bright</label>
+              <input type="range" id="sg-bright" min="-100" max="100" value="0" />
+              <span class="val" id="sg-bright-v">0</span>
+            </div>
+            <div class="sg-row">
+              <label>Contrast</label>
+              <input type="range" id="sg-contrast" min="-100" max="100" value="0" />
+              <span class="val" id="sg-contrast-v">0</span>
+            </div>
+            <div class="sg-row">
+              <label>Saturate</label>
+              <input type="range" id="sg-sat" min="-100" max="100" value="0" />
+              <span class="val" id="sg-sat-v">0</span>
+            </div>
+            <div class="sg-row">
+              <label>Hue</label>
+              <input type="range" id="sg-hue" min="-180" max="180" value="0" />
+              <span class="val" id="sg-hue-v">0</span>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn prim" data-act="adj-apply">Apply</button>
+              <button class="sg-btn" data-act="adj-reset">Reset</button>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="f-grayscale">Grayscale</button>
+              <button class="sg-btn" data-act="f-invert">Invert</button>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="f-blur">Blur</button>
+              <button class="sg-btn" data-act="f-sharpen">Sharpen</button>
+            </div>
+            <h3 style="margin-top: 14px">Remove background</h3>
+            <div class="sg-row">
+              <label>Tolerance</label>
+              <input type="range" id="sg-bgtol" min="2" max="180" value="50" />
+              <span class="val" id="sg-bgtol-v">50</span>
+            </div>
+            <div class="sg-row">
+              <label>Mode</label>
+              <select id="sg-bgmode" style="flex: 1">
+                <option value="edges">From edges (keep subject)</option>
+                <option value="all">All matching color</option>
+              </select>
+            </div>
+            <div class="sg-row">
+              <label>Sample</label>
+              <select id="sg-bgsample" style="flex: 1">
+                <option value="corners">Auto (corners)</option>
+                <option value="fg">Foreground color</option>
+              </select>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn prim" data-act="f-removebg" title="Make the background transparent (works best on a flat/solid background)">✂ Remove Background</button>
+            </div>
+          </div>
+
+          <!-- looks -->
+          <div class="sg-panel">
+            <h3>Looks</h3>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="look-bw">B&amp;W</button>
+              <button class="sg-btn" data-act="look-noir">Noir</button>
+              <button class="sg-btn" data-act="look-sepia">Sepia</button>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="look-warm">Warm</button>
+              <button class="sg-btn" data-act="look-cool">Cool</button>
+              <button class="sg-btn" data-act="look-punch">Punch</button>
+            </div>
+            <div class="sg-applyrow">
+              <button class="sg-btn" data-act="look-fade">Fade</button>
+              <button class="sg-btn" data-act="look-matte">Matte</button>
+              <button class="sg-btn" data-act="f-vignette">Vignette</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== status bar ===================== -->
+      <div class="sg-status">
+        <span>Imago <span class="dim">v1.0</span></span>
+        <span id="sg-docsize" class="dim">—</span>
+        <span id="sg-cursorpos">—</span>
+        <span id="sg-selinfo"></span>
+        <span class="sg-hint">B brush · E eraser · V move · M marquee · G fill · I pick · Ctrl+Z undo</span>
+      </div>
+    </div>
+    <script src="imago.js"></script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+name: Publish catalog
+
+# Builds an installable zip for every extension, computes its sha256, generates
+# index.json (the catalog the Scry app fetches), publishes the zips + catalog as
+# a GitHub Release, and commits the regenerated index.json back to main.
+#
+# Trigger by pushing a tag (e.g. `git tag v1 && git push --tags`) or manually
+# from the Actions tab.
+
+on:
+  push:
+    tags: ["v*", "release-*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build zips + catalog
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          repo="${GITHUB_REPOSITORY}"
+          asset_base="https://github.com/${repo}/releases/latest/download"
+          raw_base="https://raw.githubusercontent.com/${repo}/main"
+          entries='[]'
+
+          for dir in extensions/*/; do
+            folder="$(basename "$dir")"
+            [ "$folder" = "_template" ] && continue
+            manifest="${dir}extension.json"
+            [ -f "$manifest" ] || continue
+
+            id="$(jq -r '.id' "$manifest")"
+            case "$id" in com.example.*) echo "skip example: $id"; continue;; esac
+            version="$(jq -r '.version' "$manifest")"
+            icon="$(jq -r '.icon // empty' "$manifest")"
+            zipname="${id}-${version}.zip"
+
+            # Zip the folder CONTENTS (so the manifest is at the zip root), minus
+            # any dotfiles. The app extracts this straight into <user>/extensions/<id>/.
+            ( cd "$dir" && zip -rq "${GITHUB_WORKSPACE}/dist/${zipname}" . -x '*/.*' '.*' )
+
+            sha="$(sha256sum "dist/${zipname}" | cut -d' ' -f1)"
+            size="$(stat -c%s "dist/${zipname}")"
+            iconUrl=""
+            [ -n "$icon" ] && iconUrl="${raw_base}/${dir}${icon}"
+
+            entry="$(jq -n --slurpfile m "$manifest" \
+              --arg url "${asset_base}/${zipname}" \
+              --arg sha "$sha" --argjson size "$size" --arg iconUrl "$iconUrl" '
+              {
+                id: $m[0].id, name: $m[0].name, version: $m[0].version,
+                description: $m[0].description, author: $m[0].author,
+                surfaces: $m[0].surfaces, permissions: $m[0].permissions,
+                minScryVersion: $m[0].minScryVersion,
+                url: $url, sha256: $sha, size: $size,
+                iconUrl: (if $iconUrl == "" then null else $iconUrl end)
+              }')"
+            entries="$(jq --argjson e "$entry" '. + [$e]' <<<"$entries")"
+            echo "packaged ${id} ${version} (${size} bytes, sha256 ${sha:0:12}…)"
+          done
+
+          jq -n --argjson exts "$entries" \
+            '{ schema: 1, updated: (now | todate), extensions: $exts }' > index.json
+          cp index.json dist/index.json
+          echo "=== index.json ==="; cat index.json
+
+      - name: Publish release (zips + catalog)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'catalog' }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || 'Catalog (rolling)' }}
+          files: dist/*
+
+      - name: Commit regenerated index.json to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          cp dist/index.json index.json
+          git add index.json
+          git diff --staged --quiet || git commit -m "chore: regenerate catalog [skip ci]"
+          git push origin HEAD:main

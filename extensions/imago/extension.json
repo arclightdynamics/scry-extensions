@@ -1,0 +1,19 @@
+{
+  "$schema": "../extension.schema.json",
+  "id": "com.enterscry.imago",
+  "name": "Imago",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A layered raster image editor — brushes, selections, shapes, text, adjustments, filters, and social-media size presets.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["desktop.dock"],
+  "panel": {
+    "width": 1180,
+    "height": 760,
+    "resizable": true
+  },
+  "permissions": ["clipboard", "downloads"],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

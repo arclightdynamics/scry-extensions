@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mirage — Video Studio</title>
+    <link rel="stylesheet" href="mirage.css" />
+  </head>
+  <body>
+    <div class="mi-app">
+      <!-- ===================== top bar ===================== -->
+      <div class="mi-top">
+        <span class="mi-brand"><span class="dot"></span>MIRAGE <small>video studio</small></span>
+        <button class="mi-btn" id="mi-undo" data-act="undo" title="Undo (Ctrl+Z)">↶</button>
+        <button class="mi-btn" id="mi-redo" data-act="redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+        <button class="mi-btn" data-act="save" title="Save project (Ctrl+S)">💾 Save</button>
+        <button class="mi-btn" data-act="open" title="Open .mirage project (Ctrl+O)">📂 Open</button>
+        <span style="width: 8px"></span>
+        <button class="mi-btn" data-act="import">＋ Import</button>
+        <button class="mi-btn" data-act="add-text">T Text</button>
+        <button class="mi-btn" data-act="add-caption">⌷ Caption</button>
+        <button class="mi-btn" data-act="add-overlay" title="Add a picture-in-picture / logo / watermark overlay">▣ PiP / Logo</button>
+        <button class="mi-btn" data-act="guides" title="Rule-of-thirds &amp; safe-area guides (preview only)">⊞ Guides</button>
+        <span class="mi-spacer"></span>
+        <label class="mi-bg-lbl" title="Background / letterbox color">BG
+          <input type="color" id="mi-bg" value="#000000" />
+        </label>
+        <span class="mi-preset">
+          Format
+          <select id="mi-format">
+            <optgroup label="Vertical 9:16">
+              <option value="1080x1920">TikTok / Reels / Shorts · 1080×1920</option>
+            </optgroup>
+            <optgroup label="Square &amp; Portrait">
+              <option value="1080x1080">Instagram feed · 1080×1080</option>
+              <option value="1080x1350">Instagram portrait · 1080×1350</option>
+            </optgroup>
+            <optgroup label="Landscape 16:9">
+              <option value="1920x1080">YouTube · 1920×1080</option>
+              <option value="1280x720">X / Twitter · 1280×720</option>
+            </optgroup>
+          </select>
+        </span>
+        <button class="mi-btn prim" data-act="export">⬇ Export</button>
+      </div>
+
+      <!-- ===================== middle ===================== -->
+      <div class="mi-mid">
+        <!-- library -->
+        <div class="mi-col mi-library">
+          <div class="mi-h">Media <span id="mi-lib-count" style="color: var(--muted)"></span></div>
+          <div class="mi-media" id="mi-media"></div>
+          <div class="mi-drop" id="mi-drop">Drop video / image / audio here<br />or click ＋ Import</div>
+        </div>
+
+        <!-- preview -->
+        <div class="mi-stage">
+          <div class="mi-canvas-wrap">
+            <canvas id="mi-canvas" width="1080" height="1920"></canvas>
+          </div>
+          <div class="mi-transport">
+            <button class="mi-play" id="mi-play" title="Play / Pause (Space)">▶</button>
+            <span class="mi-time"><span id="mi-cur">0:00.0</span> / <span id="mi-dur">0:00.0</span></span>
+            <input type="range" class="mi-scrub" id="mi-scrub" min="0" max="1000" value="0" />
+          </div>
+        </div>
+
+        <!-- properties -->
+        <div class="mi-col mi-props" id="mi-props">
+          <div class="mi-h">Properties</div>
+          <div id="mi-prop-body"><div class="mi-empty">Select a clip, text, or caption to edit it. Import media to begin, then click an item to add it to the timeline.</div></div>
+        </div>
+      </div>
+
+      <!-- ===================== timeline ===================== -->
+      <div class="mi-timeline">
+        <div class="mi-tl-head">
+          <span>Timeline</span>
+          <button class="mi-btn" data-act="split" style="padding: 3px 9px" title="Split clip at playhead (S)">✂ Split</button>
+          <button class="mi-btn" data-act="dup" style="padding: 3px 9px" title="Duplicate selected (Ctrl+D)">⧉ Duplicate</button>
+          <button class="mi-btn danger" data-act="del" style="padding: 3px 9px" title="Delete selected (Del)">🗑 Delete</button>
+          <span style="width: 10px"></span>
+          <button class="mi-btn" data-act="srt-import" style="padding: 3px 9px" title="Import .srt captions">⤓ SRT</button>
+          <button class="mi-btn" data-act="srt-export" style="padding: 3px 9px" title="Export captions as .srt">⤒ SRT</button>
+          <span class="mi-spacer"></span>
+          <span id="mi-zoom-lbl" style="color: var(--muted)">px/s</span>
+          <input type="range" id="mi-zoom" min="20" max="200" value="60" style="width: 110px" />
+        </div>
+        <div class="mi-ruler" id="mi-ruler"></div>
+        <div class="mi-tracks" id="mi-tracks">
+          <div class="mi-track" id="mi-track-main"><span class="lbl">video</span></div>
+          <div class="mi-track" id="mi-track-overlay"><span class="lbl">overlay / PiP</span></div>
+          <div class="mi-track" id="mi-track-text"><span class="lbl">text / captions</span></div>
+          <div class="mi-track" id="mi-track-audio"><span class="lbl">audio</span></div>
+          <div class="mi-playhead" id="mi-playhead" style="left: 0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- export modal -->
+    <div class="mi-modal hidden" id="mi-export-modal">
+      <div class="mi-card">
+        <h2>Export video</h2>
+        <div class="mi-row"><label>Format</label><span id="mi-exp-fmt" style="color: var(--fg-2)"></span></div>
+        <div class="mi-row"><label>Mode</label>
+          <select id="mi-exp-mode"></select>
+        </div>
+        <div class="mi-row" id="mi-exp-container-row"><label>Container</label>
+          <select id="mi-exp-container"></select>
+        </div>
+        <div class="mi-row"><label>Quality</label>
+          <select id="mi-exp-quality">
+            <option value="8000000">High (8 Mbps)</option>
+            <option value="12000000">Max (12 Mbps)</option>
+            <option value="4000000">Light (4 Mbps)</option>
+          </select>
+        </div>
+        <div class="mi-prog"><i id="mi-exp-bar"></i></div>
+        <div class="mi-note" id="mi-exp-note">Export records the timeline in real time, so it takes about as long as the video. Keep this panel focused while it renders.</div>
+        <div style="display: flex; gap: 8px; margin-top: 14px">
+          <button class="mi-btn prim" id="mi-exp-start" style="flex: 1">Start export</button>
+          <button class="mi-btn" id="mi-exp-cancel">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="vendor/mp4-muxer.js"></script>
+    <script src="mirage.js"></script>
+  </body>
+</html>

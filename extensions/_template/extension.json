@@ -1,0 +1,19 @@
+{
+  "$schema": "../extension.schema.json",
+  "id": "com.example.template",
+  "name": "Template Extension",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Starting point for a Scry mini-app. Copy this folder and edit.",
+  "author": "Your Name",
+  "icon": "icon.svg",
+  "surfaces": ["desktop.dock"],
+  "panel": {
+    "width": 360,
+    "height": 420,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

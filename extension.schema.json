@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://enterscry.com/schemas/extension.json",
+  "title": "Scry Extension Manifest",
+  "description": "Manifest for a Scry mini-app extension. One per extension folder, named extension.json.",
+  "type": "object",
+  "required": ["id", "name", "version", "entry"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer to this schema for editor tooling."
+    },
+    "id": {
+      "type": "string",
+      "description": "Globally unique id. Reverse-DNS recommended (com.you.thing). Used as the registry key.",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "minLength": 2
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable display name.",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version, e.g. 1.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+].+)?$"
+    },
+    "entry": {
+      "type": "string",
+      "description": "Relative path to the HTML file loaded in the mini-app frame. Must stay inside the extension folder.",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line summary shown in tooltips and the launcher."
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name or handle."
+    },
+    "icon": {
+      "type": "string",
+      "description": "Relative path to an icon (svg or png) used in the dock and launcher."
+    },
+    "surfaces": {
+      "type": "array",
+      "description": "Where the extension is mounted in the UI.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "desktop.dock",
+          "desktop.widget",
+          "cockpit.dock",
+          "command",
+          "pane"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "panel": {
+      "type": "object",
+      "description": "Default panel size when the mini-app is opened from a dock.",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 120, "maximum": 4096 },
+        "height": { "type": "integer", "minimum": 120, "maximum": 4096 },
+        "resizable": { "type": "boolean" }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Bridge capabilities the extension requests. Empty means a fully sandboxed frame with no host access.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "workspaces.read",
+          "workspaces.write",
+          "terminal.write",
+          "clipboard",
+          "notifications",
+          "storage",
+          "downloads",
+          "popups",
+          "modals"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "engine": {
+      "type": "string",
+      "description": "Render engine. Only 'iframe' is supported today; 'native' is reserved.",
+      "enum": ["iframe", "native"],
+      "default": "iframe"
+    },
+    "minScryVersion": {
+      "type": "string",
+      "description": "Minimum Scry version required. Advisory in Phase 1.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  }
+}
