@@ -58,6 +58,9 @@ surfaces, and the sandbox model.
 
 ## Publishing / contributing
 
+**Full runbook: [`PUBLISHING.md`](./PUBLISHING.md)** — how the catalog works and
+the exact steps to add + ship an extension (written for humans and AI agents).
+
 Extensions are **curated**. To propose one, open a pull request adding your
 `extensions/<id>/` folder. CI validates it against the schema; once merged, a
 maintainer cuts a release and your extension appears in the in-app catalog.
