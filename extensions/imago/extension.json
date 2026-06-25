@@ -1,5 +1,5 @@
 {
-  "$schema": "../extension.schema.json",
+  "$schema": "../../extension.schema.json",
   "id": "com.enterscry.imago",
   "name": "Imago",
   "version": "1.0.0",

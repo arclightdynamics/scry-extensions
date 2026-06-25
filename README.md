@@ -30,6 +30,9 @@ and reload.
 | **Notes** (`notes`) | Markdown scratchpad with live preview, multi-note sidebar, autosave. |
 | **Pomodoro** (`pomodoro`) | Focus timer with work/break cycles, progress ring, session count. |
 | **Convert** (`convert`) | Two-way unit converter — length, mass, temp, data, time, speed. |
+| **Palette** (`palette`) | Color companion — hex/RGB/HSL, tints/shades, harmony, copy. |
+| **JSON** (`json`) | Format / validate / minify JSON with error locations + copy. |
+| **Aether** (`aether`) | Focus soundscapes — layer ambiences, noise, and tones for deep work. |
 | **Mirage** (`mirage`) | Social video studio — clip timeline, captions, export presets. |
 | **Imago** (`imago`) | Layered raster image editor — brushes, selections, filters. |
 | `_template` | Starter you copy to build your own (not published to the catalog). |

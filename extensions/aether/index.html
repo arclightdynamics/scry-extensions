@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aether — Focus Sounds</title>
+    <link rel="stylesheet" href="aether.css" />
+  </head>
+  <body>
+    <div class="ae-app">
+      <div class="ae-head">
+        <div class="ae-topbar">
+          <div class="ae-brand"><span class="dot"></span>AETHER <small>focus sounds</small></div>
+          <button class="ae-icon-btn" id="ae-mini" title="Toggle mini player">⊟</button>
+        </div>
+        <canvas class="ae-viz" id="ae-viz" width="600" height="40"></canvas>
+        <div class="ae-master">
+          <button class="ae-play" id="ae-play" title="Play / pause all (Space)">▶</button>
+          <input type="range" class="ae-vol" id="ae-master" min="0" max="100" value="70" title="Master volume" />
+          <span class="ae-vlabel" id="ae-master-v">70</span>
+        </div>
+        <div class="ae-timer">
+          <span class="ae-t-time" id="ae-t-time">25:00</span>
+          <span class="ae-t-phase" id="ae-t-phase">focus</span>
+          <span class="sp" style="flex:1"></span>
+          <select id="ae-t-preset" title="Focus / break length">
+            <option value="25,5">25 / 5</option>
+            <option value="50,10">50 / 10</option>
+            <option value="15,3">15 / 3</option>
+            <option value="90,20">90 / 20</option>
+          </select>
+          <button class="ae-tbtn" id="ae-t-start">Start</button>
+          <button class="ae-tbtn" id="ae-t-reset">Reset</button>
+        </div>
+      </div>
+
+      <!-- mini player: compact strip of the live sounds (shown only in mini mode) -->
+      <div class="ae-mini-active" id="ae-mini-active"></div>
+
+      <div class="ae-body">
+        <div class="ae-h">Presets — one tap to set a mix</div>
+        <div class="ae-presets" id="ae-presets"></div>
+
+        <div class="ae-h" style="margin-top: 16px">Soundscape — layer what helps you focus</div>
+        <div class="ae-grid" id="ae-grid"></div>
+
+        <div class="ae-h" style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between">
+          <span>Focus tones</span>
+          <select id="ae-tonemode" title="Binaural needs headphones; isochronic works on speakers" style="text-transform: none; letter-spacing: 0">
+            <option value="isochronic">Isochronic · speakers</option>
+            <option value="binaural">Binaural · headphones</option>
+          </select>
+        </div>
+        <div class="ae-grid" id="ae-tonegrid"></div>
+      </div>
+
+      <div class="ae-foot">
+        <span id="ae-status">Tap a sound to begin</span>
+        <span class="sp"></span>
+        <span class="ae-warmth-wrap" title="Warmth — roll off harsh highs">🔉
+          <input type="range" id="ae-warmth" min="0" max="100" value="100" />
+        </span>
+        <span class="ae-chip" id="ae-stopall">Stop all</span>
+      </div>
+    </div>
+    <script src="aether.js"></script>
+  </body>
+</html>

@@ -32,6 +32,7 @@
           <button data-act="img-rcw" title="Rotate 90° clockwise">⟳</button>
           <button data-act="img-flh" title="Flip horizontal">⇋</button>
           <button data-act="img-flv" title="Flip vertical">⤡</button>
+          <button data-act="guides" id="sg-guides-btn" title="Rule-of-thirds &amp; safe-area guides (overlay only)">⊞</button>
         </div>
         <span class="sg-spacer"></span>
         <div class="sg-zoom">
@@ -124,51 +125,23 @@
                 <option value="1.5">Photo 3:2</option>
               </select>
             </div>
-          </div>
-
-          <!-- layers -->
-          <div class="sg-panel">
-            <h3>
-              Layers
-              <span class="sg-layer-tools">
-                <button class="sg-btn" data-act="layer-add" title="New layer">＋</button>
-                <button class="sg-btn" data-act="layer-dup" title="Duplicate">⧉</button>
-                <button class="sg-btn" data-act="layer-up" title="Move up">▲</button>
-                <button class="sg-btn" data-act="layer-down" title="Move down">▼</button>
-                <button class="sg-btn" data-act="layer-merge" title="Merge down">⤓</button>
-                <button class="sg-btn" data-act="layer-del" title="Delete">🗑</button>
-              </span>
-            </h3>
-            <div class="sg-row">
-              <label>Opacity</label>
-              <input type="range" id="sg-layer-opacity" min="0" max="100" value="100" />
-              <span class="val" id="sg-layer-opacity-v">100</span>
+            <div class="sg-row" id="sg-textstyle-row">
+              <label>Style</label>
+              <select id="sg-textalign" style="flex: 1" title="Text alignment">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+              <label style="width: auto; gap: 3px" title="Outline (uses background color)"><input type="checkbox" id="sg-textoutline" /> ▢</label>
+              <label style="width: auto; gap: 3px" title="Drop shadow"><input type="checkbox" id="sg-textshadow" /> ☂</label>
             </div>
-            <div class="sg-row">
-              <label>Blend</label>
-              <select id="sg-blend" style="flex: 1">
-                <option value="source-over">Normal</option>
-                <option value="multiply">Multiply</option>
-                <option value="screen">Screen</option>
-                <option value="overlay">Overlay</option>
-                <option value="darken">Darken</option>
-                <option value="lighten">Lighten</option>
-                <option value="color-dodge">Color Dodge</option>
-                <option value="color-burn">Color Burn</option>
-                <option value="hard-light">Hard Light</option>
-                <option value="soft-light">Soft Light</option>
-                <option value="difference">Difference</option>
-                <option value="hue">Hue</option>
-                <option value="saturation">Saturation</option>
-                <option value="color">Color</option>
-                <option value="luminosity">Luminosity</option>
+            <div class="sg-row" id="sg-grad-row">
+              <label>Gradient</label>
+              <select id="sg-gradtype" style="flex: 1" title="Drag on the canvas to draw (Shift = straight)">
+                <option value="fg-transparent">Foreground → transparent</option>
+                <option value="fg-bg">Foreground → background</option>
               </select>
             </div>
-            <div class="sg-applyrow">
-              <button class="sg-btn" data-act="layer-mergevis" title="Merge all visible layers into one">Merge Visible</button>
-              <button class="sg-btn" data-act="layer-flatten" title="Flatten everything to a single layer">Flatten</button>
-            </div>
-            <div class="sg-layers" id="sg-layers"></div>
           </div>
 
           <!-- adjustments / filters -->
@@ -248,6 +221,53 @@
               <button class="sg-btn" data-act="look-fade">Fade</button>
               <button class="sg-btn" data-act="look-matte">Matte</button>
               <button class="sg-btn" data-act="f-vignette">Vignette</button>
+            </div>
+          </div>
+
+          <!-- layers — Photoshop-style, docked at the bottom of the column -->
+          <div class="sg-panel sg-panel-layers">
+            <div class="sg-ps-tabs">
+              <span class="tab on">Layers</span>
+              <span class="tab dim">Channels</span>
+              <span class="tab dim">Paths</span>
+            </div>
+            <div class="sg-ps-controls">
+              <div class="sg-ps-row">
+                <select id="sg-blend" class="sg-ps-blend" title="Blend mode">
+                  <option value="source-over">Normal</option>
+                  <option value="multiply">Multiply</option>
+                  <option value="screen">Screen</option>
+                  <option value="overlay">Overlay</option>
+                  <option value="darken">Darken</option>
+                  <option value="lighten">Lighten</option>
+                  <option value="color-dodge">Color Dodge</option>
+                  <option value="color-burn">Color Burn</option>
+                  <option value="hard-light">Hard Light</option>
+                  <option value="soft-light">Soft Light</option>
+                  <option value="difference">Difference</option>
+                  <option value="hue">Hue</option>
+                  <option value="saturation">Saturation</option>
+                  <option value="color">Color</option>
+                  <option value="luminosity">Luminosity</option>
+                </select>
+                <span class="sg-ps-op" title="Layer opacity">
+                  <label>Opacity</label>
+                  <input type="range" id="sg-layer-opacity" min="0" max="100" value="100" />
+                  <span class="val" id="sg-layer-opacity-v">100</span><i>%</i>
+                </span>
+              </div>
+            </div>
+            <div class="sg-layers" id="sg-layers"></div>
+            <div class="sg-ps-footer">
+              <button class="sg-icn" data-act="layer-mergevis" title="Merge visible">▦</button>
+              <button class="sg-icn" data-act="layer-flatten" title="Flatten image">▤</button>
+              <span class="sep"></span>
+              <button class="sg-icn" data-act="layer-down" title="Move layer down">▽</button>
+              <button class="sg-icn" data-act="layer-up" title="Move layer up">△</button>
+              <button class="sg-icn" data-act="layer-merge" title="Merge down">⤓</button>
+              <button class="sg-icn" data-act="layer-dup" title="Duplicate layer">⧉</button>
+              <button class="sg-icn" data-act="layer-add" title="New layer">⊞</button>
+              <button class="sg-icn danger" data-act="layer-del" title="Delete layer">🗑</button>
             </div>
           </div>
         </div>

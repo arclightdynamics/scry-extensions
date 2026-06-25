@@ -80,7 +80,20 @@
   // ---- timeline math ------------------------------------------------------
   const IMG_DEFAULT = 4; // seconds for a still image
   // Default visual-effect fields stamped onto every new clip.
-  const clipFx = () => ({ scale: 1, ox: 0, oy: 0, brightness: 100, contrast: 100, saturate: 100, blur: 0, fadeIn: 0, fadeOut: 0, kenBurns: false, trans: { type: "none", dur: 0.5 } });
+  const clipFx = () => ({ scale: 1, ox: 0, oy: 0, brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0, grayscale: 0, blur: 0, look: "None", fadeIn: 0, fadeOut: 0, kenBurns: false, trans: { type: "none", dur: 0.5 } });
+  // One-click colour grades (set the underlying adjust fields).
+  const LOOKS = {
+    None:    { brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0, grayscale: 0 },
+    Vivid:   { brightness: 103, contrast: 110, saturate: 135, hue: 0, sepia: 0, grayscale: 0 },
+    Punch:   { brightness: 100, contrast: 125, saturate: 120, hue: 0, sepia: 0, grayscale: 0 },
+    Warm:    { brightness: 104, contrast: 102, saturate: 110, hue: 0, sepia: 25, grayscale: 0 },
+    Cool:    { brightness: 102, contrast: 102, saturate: 112, hue: -12, sepia: 0, grayscale: 0 },
+    Vintage: { brightness: 105, contrast: 90, saturate: 85, hue: 0, sepia: 45, grayscale: 0 },
+    Fade:    { brightness: 108, contrast: 85, saturate: 90, hue: 0, sepia: 10, grayscale: 0 },
+    "B&W":   { brightness: 100, contrast: 112, saturate: 100, hue: 0, sepia: 0, grayscale: 100 },
+    Noir:    { brightness: 95, contrast: 138, saturate: 100, hue: 0, sepia: 0, grayscale: 100 },
+  };
+  function applyLook(c, name) { const L = LOOKS[name]; if (!L) return; Object.assign(c, L); c.look = name; }
   // Video playback length honours speed: a 10s source at 2× lasts 5s.
   function clipDur(c) { return c.type === "image" ? c.dur : Math.max(0.05, (c.trimOut - c.trimIn) / (c.speed || 1)); }
   // Audio-clip helpers (placed segment on the audio track).
@@ -160,6 +173,9 @@
     if ((c.brightness ?? 100) !== 100) f.push(`brightness(${c.brightness}%)`);
     if ((c.contrast ?? 100) !== 100) f.push(`contrast(${c.contrast}%)`);
     if ((c.saturate ?? 100) !== 100) f.push(`saturate(${c.saturate}%)`);
+    if ((c.hue ?? 0) !== 0) f.push(`hue-rotate(${c.hue}deg)`);
+    if ((c.sepia ?? 0) > 0) f.push(`sepia(${c.sepia}%)`);
+    if ((c.grayscale ?? 0) > 0) f.push(`grayscale(${c.grayscale}%)`);
     if ((c.blur ?? 0) > 0) f.push(`blur(${c.blur}px)`);
     return f.length ? f.join(" ") : "none";
   }
@@ -536,6 +552,7 @@
       d.innerHTML = `<span class="cn">${esc(c.name)}</span>`;
       d.onclick = (e) => { e.stopPropagation(); select("clip", c.id); };
       enableClipDrag(d, c);
+      addTrimHandles(d, c, "clip");
       main.appendChild(d);
     });
     for (const tx of proj.texts) {
@@ -546,6 +563,7 @@
       d.innerHTML = `<span class="cn">${tx.kind === "caption" ? "⌷ " : "T "}${esc(tx.text.slice(0, 18))}</span>`;
       d.onclick = (e) => { e.stopPropagation(); select("text", tx.id); };
       enableTextDrag(d, tx);
+      addTrimHandles(d, tx, "text");
       text.appendChild(d);
     }
     if (over) for (const ov of proj.overlays) {
@@ -556,6 +574,7 @@
       d.innerHTML = `<span class="cn">▣ ${esc(ov.name.slice(0, 16))}</span>`;
       d.onclick = (e) => { e.stopPropagation(); select("overlay", ov.id); };
       enableOverlayDrag(d, ov);
+      addTrimHandles(d, ov, "overlay");
       over.appendChild(d);
     }
     for (const a of proj.audios) {
@@ -566,6 +585,7 @@
       d.innerHTML = `<span class="cn">♪ ${esc(a.name.slice(0, 16))}</span>`;
       d.onclick = (e) => { e.stopPropagation(); select("audio", a.id); };
       enableAudioDrag(d, a);
+      addTrimHandles(d, a, "audio");
       audio.appendChild(d);
     }
   }
@@ -592,7 +612,7 @@
   function enableTextDrag(d, tx) {
     d.addEventListener("pointerdown", (e) => {
       const sx = e.clientX, s0 = tx.start, len = tx.end - tx.start; d.setPointerCapture(e.pointerId);
-      const move = (ev) => { const ns = Math.max(0, s0 + (ev.clientX - sx) / pxPerSec); tx.start = ns; tx.end = ns + len; renderTracks(); if (sel && sel.id === tx.id) renderProps(); };
+      const move = (ev) => { const ns = snapTime(Math.max(0, s0 + (ev.clientX - sx) / pxPerSec), tx.id); tx.start = ns; tx.end = ns + len; renderTracks(); if (sel && sel.id === tx.id) renderProps(); };
       const up = (ev) => { d.removeEventListener("pointermove", move); d.removeEventListener("pointerup", up); try { d.releasePointerCapture(ev.pointerId); } catch (e) {} drawFrame(cur); commit(); };
       d.addEventListener("pointermove", move); d.addEventListener("pointerup", up);
     });
@@ -601,7 +621,7 @@
   function enableOverlayDrag(d, ov) {
     d.addEventListener("pointerdown", (e) => {
       const sx = e.clientX, s0 = ov.start, len = ov.end - ov.start; d.setPointerCapture(e.pointerId);
-      const move = (ev) => { const ns = Math.max(0, s0 + (ev.clientX - sx) / pxPerSec); ov.start = ns; ov.end = ns + len; renderTracks(); if (sel && sel.id === ov.id) renderProps(); };
+      const move = (ev) => { const ns = snapTime(Math.max(0, s0 + (ev.clientX - sx) / pxPerSec), ov.id); ov.start = ns; ov.end = ns + len; renderTracks(); if (sel && sel.id === ov.id) renderProps(); };
       const up = (ev) => { d.removeEventListener("pointermove", move); d.removeEventListener("pointerup", up); try { d.releasePointerCapture(ev.pointerId); } catch (e) {} drawFrame(cur); commit(); };
       d.addEventListener("pointermove", move); d.addEventListener("pointerup", up);
     });
@@ -610,10 +630,66 @@
   function enableAudioDrag(d, a) {
     d.addEventListener("pointerdown", (e) => {
       const sx = e.clientX, s0 = a.start || 0; d.setPointerCapture(e.pointerId);
-      const move = (ev) => { a.start = Math.max(0, s0 + (ev.clientX - sx) / pxPerSec); renderTracks(); if (sel && sel.id === a.id) renderProps(); };
+      const move = (ev) => { a.start = snapTime(Math.max(0, s0 + (ev.clientX - sx) / pxPerSec), a.id); renderTracks(); if (sel && sel.id === a.id) renderProps(); };
       const up = (ev) => { d.removeEventListener("pointermove", move); d.removeEventListener("pointerup", up); try { d.releasePointerCapture(ev.pointerId); } catch (e) {} updateTime(); commit(); };
       d.addEventListener("pointermove", move); d.addEventListener("pointerup", up);
     });
+  }
+
+  // ---- snapping ------------------------------------------------------------
+  // Significant times other blocks can snap to: 0, the playhead, and every
+  // clip / overlay / audio / text edge (excluding the item being dragged).
+  function snapPoints(excludeId) {
+    const pts = [0, cur];
+    const starts = clipStarts();
+    proj.clips.forEach((c, i) => { pts.push(starts[i], starts[i] + clipDur(c)); });
+    proj.overlays.forEach((o) => { if (o.id !== excludeId) pts.push(o.start, o.end); });
+    proj.audios.forEach((a) => { if (a.id !== excludeId) pts.push(a.start || 0, audioEnd(a)); });
+    proj.texts.forEach((t) => { if (t.id !== excludeId) pts.push(t.start, t.end); });
+    return pts;
+  }
+  function snapTime(t, excludeId) {
+    const thresh = 8 / pxPerSec; // ~8px magnet
+    let best = t, bd = thresh;
+    for (const p of snapPoints(excludeId)) { const d = Math.abs(p - t); if (d < bd) { bd = d; best = p; } }
+    return Math.max(0, best);
+  }
+
+  // ---- timeline trim handles (drag a clip's edges) ------------------------
+  function addTrimHandles(d, item, type) {
+    for (const side of ["l", "r"]) {
+      const h = document.createElement("div");
+      h.className = "mi-handle " + side;
+      h.addEventListener("pointerdown", (e) => { e.stopPropagation(); startTrim(e, item, type, side, h); });
+      d.appendChild(h);
+    }
+  }
+  function startTrim(e, item, type, side, h) {
+    try { h.setPointerCapture(e.pointerId); } catch (err) {}
+    const sx = e.clientX;
+    const o = { trimIn: item.trimIn, trimOut: item.trimOut, dur: item.dur, start: item.start, end: item.end };
+    const srcDur = item.el && item.el.duration ? item.el.duration : null;
+    const move = (ev) => {
+      const dt = (ev.clientX - sx) / pxPerSec;
+      if (type === "clip" && item.type === "video") {
+        const sp = item.speed || 1;
+        if (side === "l") item.trimIn = clamp(o.trimIn + dt * sp, 0, item.trimOut - 0.1);
+        else item.trimOut = clamp(o.trimOut + dt * sp, item.trimIn + 0.1, srcDur || o.trimOut + dt * sp);
+      } else if (type === "clip") { // image
+        item.dur = clamp((side === "l" ? o.dur - dt : o.dur + dt), 0.2, 120);
+      } else if (type === "audio") {
+        if (side === "l") {
+          const ns = snapTime(Math.max(0, o.start + dt), item.id), shift = ns - o.start;
+          item.start = ns; item.trimIn = clamp(o.trimIn + shift, 0, o.trimOut - 0.1);
+        } else { item.trimOut = clamp(o.trimOut + dt, item.trimIn + 0.1, srcDur || o.trimOut + dt); }
+      } else { // overlay or text — move start/end edges
+        if (side === "l") item.start = clamp(snapTime(o.start + dt, item.id), 0, o.end - 0.2);
+        else item.end = Math.max(item.start + 0.2, snapTime(o.end + dt, item.id));
+      }
+      renderTracks(); if (sel && sel.id === item.id) renderProps(); updateTime(); drawFrame(cur);
+    };
+    const up = (ev) => { h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); try { h.releasePointerCapture(ev.pointerId); } catch (err) {} commit(); };
+    h.addEventListener("pointermove", move); h.addEventListener("pointerup", up);
   }
 
   function refreshAll() { renderLibrary(); renderTracks(); updateTime(); drawFrame(cur); renderProps(); }
@@ -652,10 +728,12 @@
       <div class="mi-row"><label>X</label><input type="range" id="p-ox" min="-50" max="50" value="${Math.round((c.ox || 0) * 100)}"><span class="val" id="p-ox-v">${Math.round((c.ox || 0) * 100)}</span></div>
       <div class="mi-row"><label>Y</label><input type="range" id="p-oy" min="-50" max="50" value="${Math.round((c.oy || 0) * 100)}"><span class="val" id="p-oy-v">${Math.round((c.oy || 0) * 100)}</span></div>
       <div class="mi-row"><label>Ken Burns</label><label style="width:auto"><input type="checkbox" id="p-kb" ${c.kenBurns ? "checked" : ""}> slow zoom</label></div>
-      <div class="mi-seg">Adjust</div>
+      <div class="mi-seg">Look &amp; adjust</div>
+      <div class="mi-row"><label>Look</label><select id="p-look">${Object.keys(LOOKS).map((n) => `<option${(c.look || "None") === n ? " selected" : ""}>${n}</option>`).join("")}</select></div>
       <div class="mi-row"><label>Bright</label><input type="range" id="p-br" min="0" max="200" value="${c.brightness ?? 100}"><span class="val" id="p-br-v">${c.brightness ?? 100}</span></div>
       <div class="mi-row"><label>Contrast</label><input type="range" id="p-co" min="0" max="200" value="${c.contrast ?? 100}"><span class="val" id="p-co-v">${c.contrast ?? 100}</span></div>
       <div class="mi-row"><label>Saturate</label><input type="range" id="p-sa" min="0" max="200" value="${c.saturate ?? 100}"><span class="val" id="p-sa-v">${c.saturate ?? 100}</span></div>
+      <div class="mi-row"><label>Hue</label><input type="range" id="p-hue" min="-180" max="180" value="${c.hue ?? 0}"><span class="val" id="p-hue-v">${c.hue ?? 0}°</span></div>
       <div class="mi-row"><label>Blur</label><input type="range" id="p-bl" min="0" max="40" value="${c.blur ?? 0}"><span class="val" id="p-bl-v">${c.blur ?? 0}</span></div>
       <div class="mi-seg">Fade</div>
       <div class="mi-row"><label>In</label><input type="range" id="p-fi" min="0" max="3" step="0.1" value="${c.fadeIn ?? 0}"><span class="val" id="p-fi-v">${(c.fadeIn ?? 0).toFixed(1)}s</span></div>
@@ -687,10 +765,12 @@
     bindRange("p-ox", "p-ox-v", (v) => { c.ox = +v / 100; drawFrame(cur); }, (v) => v);
     bindRange("p-oy", "p-oy-v", (v) => { c.oy = +v / 100; drawFrame(cur); }, (v) => v);
     const kb = $("#p-kb"); if (kb) kb.onchange = () => { c.kenBurns = kb.checked; drawFrame(cur); };
-    // adjust
+    // look + adjust
+    const look = $("#p-look"); if (look) look.onchange = () => { applyLook(c, look.value); renderProps(); drawFrame(cur); };
     bindRange("p-br", "p-br-v", (v) => { c.brightness = +v; drawFrame(cur); }, (v) => v);
     bindRange("p-co", "p-co-v", (v) => { c.contrast = +v; drawFrame(cur); }, (v) => v);
     bindRange("p-sa", "p-sa-v", (v) => { c.saturate = +v; drawFrame(cur); }, (v) => v);
+    bindRange("p-hue", "p-hue-v", (v) => { c.hue = +v; drawFrame(cur); }, (v) => v + "°");
     bindRange("p-bl", "p-bl-v", (v) => { c.blur = +v; drawFrame(cur); }, (v) => v);
     // fade
     bindRange("p-fi", "p-fi-v", (v) => { c.fadeIn = +v; drawFrame(cur); }, (v) => (+v).toFixed(1) + "s");
@@ -811,6 +891,40 @@
     proj.texts.push(t);
     select("text", t.id);
     refreshAll();
+  }
+
+  // ---- text & sticker templates (one-click styled, animated graphics) -----
+  const TEXT_TEMPLATES = [
+    { name: "Bold Title", s: { text: "YOUR TITLE", size: 96, font: "Impact", color: "#ffffff", bg: "none", align: "center", xr: 0.5, yr: 0.42, anim: "pop", animDur: 0.4 } },
+    { name: "Lower Third", s: { text: "Name · Subtitle", size: 46, font: "system-ui", color: "#ffffff", bg: "#000000cc", align: "left", xr: 0.08, yr: 0.8, anim: "slide", animDur: 0.5 } },
+    { name: "Headline Bar", s: { text: "BREAKING", size: 52, font: "system-ui", color: "#0a0e1a", bg: "#22d3eecc", align: "center", xr: 0.5, yr: 0.12, anim: "slide", animDur: 0.4 } },
+    { name: "Caption", s: { text: "caption text", size: 50, font: "system-ui", color: "#ffffff", bg: "#000000cc", align: "center", xr: 0.5, yr: 0.85, anim: "none" } },
+    { name: "Hook / CTA", s: { text: "Follow for more 👉", size: 58, font: "system-ui", color: "#ffffff", bg: "#e879f9cc", align: "center", xr: 0.5, yr: 0.8, anim: "pop", animDur: 0.4 } },
+    { name: "Typewriter", s: { text: "Type your line...", size: 60, font: '"Courier New"', color: "#22d3ee", bg: "none", align: "center", xr: 0.5, yr: 0.5, anim: "type", animDur: 0.6 } },
+  ];
+  const STICKERS = ["🔥", "😂", "❤️", "👍", "✨", "🎉", "💯", "👀", "😮", "🙌", "⭐", "➡️"];
+  function addTextTemplate(s) {
+    const t = { id: uid(), kind: "text", start: cur, end: cur + 3, xr: 0.5, yr: 0.5, size: 60, color: "#ffffff", bg: "none", font: "system-ui", weight: "700", align: "center", anim: "none", animDur: 0.45, ...s };
+    proj.texts.push(t); select("text", t.id); refreshAll(); commit(); toast("Added template", "ok");
+  }
+  function addSticker(emoji) {
+    const t = { id: uid(), kind: "text", text: emoji, start: cur, end: cur + 2.5, xr: 0.5, yr: 0.4, size: 170, color: "#ffffff", bg: "none", font: "system-ui", weight: "700", align: "center", anim: "pop", animDur: 0.35 };
+    proj.texts.push(t); select("text", t.id); refreshAll(); commit(); toast("Added sticker", "ok");
+  }
+  function openTemplates() {
+    const ov = document.createElement("div"); ov.className = "mi-modal";
+    const card = document.createElement("div"); card.className = "mi-card";
+    card.innerHTML = `<h2>Text templates</h2>
+      <div class="mi-tpl-grid">${TEXT_TEMPLATES.map((t, i) => `<button class="mi-btn" data-tpl="${i}">${esc(t.name)}</button>`).join("")}</div>
+      <h2 style="margin-top:14px">Stickers &amp; emoji</h2>
+      <div class="mi-tpl-grid emoji">${STICKERS.map((e) => `<button class="mi-btn" data-emoji="${e}">${e}</button>`).join("")}</div>
+      <div style="display:flex;margin-top:14px"><button class="mi-btn" id="mi-tpl-close" style="margin-left:auto">Close</button></div>`;
+    ov.appendChild(card); document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
+    card.querySelectorAll("[data-tpl]").forEach((b) => b.onclick = () => { addTextTemplate(TEXT_TEMPLATES[+b.dataset.tpl].s); close(); });
+    card.querySelectorAll("[data-emoji]").forEach((b) => b.onclick = () => { addSticker(b.dataset.emoji); close(); });
+    $("#mi-tpl-close").onclick = close;
   }
 
   // ---- drag the selected text OR overlay on the preview canvas ------------
@@ -967,6 +1081,15 @@
     $("#mi-export-modal").classList.remove("hidden");
   }
   function startExport() { return $("#mi-exp-mode").value === "precise" ? runPreciseExport() : runExport(); }
+  // Export the current frame as a still (thumbnail / poster / cover image).
+  function exportPoster() {
+    if (totalDur() <= 0) { toast("Add a clip first", "err"); return; }
+    exporting = true; drawFrame(cur);
+    canvas.toBlob((b) => {
+      exporting = false; drawFrame(cur);
+      if (b) { download(b, `mirage-frame-${Math.round(cur * 1000)}ms.png`); toast("Saved frame as PNG ✓", "ok"); }
+    }, "image/png");
+  }
   async function runExport() {
     const mime = $("#mi-exp-container").value;
     const ext = mime.includes("mp4") ? "mp4" : "webm";
@@ -1265,6 +1388,39 @@
     });
   }
 
+  // ---- clipboard (copy / paste a selected item) --------------------------
+  let clipboard = null; // { kind, data }
+  function copySelected() {
+    const strip = (o) => { const { el, ...rest } = o; return rest; };
+    if (selectedClip()) clipboard = { kind: "clip", data: strip(selectedClip()) };
+    else if (selectedText()) clipboard = { kind: "text", data: { ...selectedText() } };
+    else if (selectedOverlay()) clipboard = { kind: "overlay", data: strip(selectedOverlay()) };
+    else if (selectedAudio()) clipboard = { kind: "audio", data: strip(selectedAudio()) };
+    else return;
+    toast("Copied", "ok");
+  }
+  function pasteClipboard() {
+    if (!clipboard) return;
+    const d = { ...clipboard.data, id: uid() };
+    if (clipboard.kind === "clip") {
+      if (d.type === "image") { const img = new Image(); img.src = d.url; d.el = img; }
+      else { const v = document.createElement("video"); v.src = d.url; v.preload = "auto"; v.playsInline = true; v.crossOrigin = "anonymous"; d.el = v; v.onloadedmetadata = () => { wireAudio(v, () => d.volume); refreshAll(); }; wireAudio(v, () => d.volume); }
+      proj.clips.push(d); select("clip", d.id);
+    } else if (clipboard.kind === "text") {
+      const len = d.end - d.start; d.start = cur; d.end = cur + len; proj.texts.push(d); select("text", d.id);
+    } else if (clipboard.kind === "overlay") {
+      const len = d.end - d.start; d.start = cur; d.end = cur + len;
+      if (d.type === "image") { const img = new Image(); img.src = d.url; d.el = img; }
+      else { const v = document.createElement("video"); v.src = d.url; v.preload = "auto"; v.playsInline = true; v.crossOrigin = "anonymous"; d.el = v; v.onloadedmetadata = () => { wireAudio(v, () => d.volume); refreshAll(); }; wireAudio(v, () => d.volume); }
+      proj.overlays.push(d); select("overlay", d.id);
+    } else if (clipboard.kind === "audio") {
+      d.start = cur; const a = document.createElement("audio"); a.src = d.url; a.preload = "auto"; a.crossOrigin = "anonymous"; d.el = a;
+      a.onloadedmetadata = () => { wireAudio(a, () => d.volume); refreshAll(); }; wireAudio(a, () => d.volume);
+      proj.audios.push(d); select("audio", d.id);
+    }
+    refreshAll(); commit(); toast("Pasted", "ok");
+  }
+
   // ---- events -------------------------------------------------------------
   document.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]")?.dataset.act;
@@ -1273,6 +1429,7 @@
     else if (act === "add-overlay") overlayInput.click();
     else if (act === "add-text") { addText("text"); commit(); }
     else if (act === "add-caption") { addText("caption"); commit(); }
+    else if (act === "templates") openTemplates();
     else if (act === "split") { splitAtPlayhead(); commit(); }
     else if (act === "del") { deleteSelected(); commit(); }
     else if (act === "dup") { duplicateSelected(); commit(); }
@@ -1283,6 +1440,7 @@
     else if (act === "redo") redo();
     else if (act === "save") saveProject();
     else if (act === "open") projInput.click();
+    else if (act === "poster") exportPoster();
     else if (act === "export") openExport();
   });
   // Any committed property edit (range release, select/checkbox/color change)
@@ -1325,14 +1483,20 @@
       if (k === "d") { e.preventDefault(); duplicateSelected(); commit(); return; }
       if (k === "s") { e.preventDefault(); saveProject(); return; }
       if (k === "o") { e.preventDefault(); projInput.click(); return; }
+      if (k === "c") { e.preventDefault(); copySelected(); return; }
+      if (k === "v") { e.preventDefault(); pasteClipboard(); return; }
       return;
     }
     if (e.altKey) return;
     if (e.code === "Space") { e.preventDefault(); playing ? stop() : play(); }
     else if (e.key === "s" || e.key === "S") splitAtPlayhead();
     else if (e.key === "Delete" || e.key === "Backspace") deleteSelected();
-    else if (e.key === "ArrowRight") seek(cur + 1 / proj.fps);
-    else if (e.key === "ArrowLeft") seek(cur - 1 / proj.fps);
+    else if (e.key === "ArrowRight" || e.key === ".") seek(cur + 1 / proj.fps);
+    else if (e.key === "ArrowLeft" || e.key === ",") seek(cur - 1 / proj.fps);
+    else if (e.key === "Home") seek(0);
+    else if (e.key === "End") seek(totalDur());
+    else if (e.key === "+" || e.key === "=") { pxPerSec = clamp(pxPerSec * 1.25, 20, 200); $("#mi-zoom").value = pxPerSec; renderTracks(); updateTime(); }
+    else if (e.key === "-" || e.key === "_") { pxPerSec = clamp(pxPerSec / 1.25, 20, 200); $("#mi-zoom").value = pxPerSec; renderTracks(); updateTime(); }
   });
 
   window.addEventListener("resize", () => { fitCanvasCss(); drawFrame(cur); });

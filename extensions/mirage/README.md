@@ -22,15 +22,19 @@ no upload, no account.
 1. **Import** video / image / audio (button or drag-and-drop onto the panel).
 2. Click a media item to **add it to the timeline**. Images get a default
    duration; videos come in full and can be trimmed.
-3. **Arrange**: drag clips on the main track to reorder; click a clip to edit
-   it. Per-clip controls: trim, Cover/Contain fit, **speed** (0.25×–4×),
+3. **Arrange**: drag clips on the main track to reorder; **drag a clip's left/right
+   edge to trim it** right on the timeline (works for clips, audio, captions, and
+   overlays), with **magnetic snapping** to the playhead and other clip edges.
+   Click a clip to edit it. Per-clip controls: trim, Cover/Contain fit, **speed** (0.25×–4×),
    volume, **transform** (zoom + X/Y reposition), **Ken Burns** slow-zoom,
-   **adjust** (brightness / contrast / saturation / blur), **fade in/out**, and
-   a **transition to the next clip** (crossfade / dip-to-background).
-4. **Titles & captions**: `T Text` for a title, `⌷ Caption` for a bottom caption.
-   Edit text/timing/style in the properties panel; **drag the text on the
-   preview** to position it; pick a **motion** preset (fade / pop / slide /
-   typewriter).
+   one-click **looks** (Vivid, Punch, Warm, Cool, Vintage, Fade, B&W, Noir) plus
+   manual **adjust** (brightness / contrast / saturation / hue / blur),
+   **fade in/out**, and a **transition to the next clip** (crossfade / dip).
+4. **Titles & captions**: `T Text` for a title, `⌷ Caption` for a bottom caption,
+   or `✨ Templates` for one-click styled, animated **title / lower-third / headline /
+   CTA** text plus an **emoji-sticker** grid. Edit text/timing/style in the
+   properties panel; **drag the text on the preview** to position it; pick a
+   **motion** preset (fade / pop / slide / typewriter).
 4b. **Overlays / PiP / logo**: `▣ PiP / Logo` adds an image or video on its own
    **overlay track** above the main video — for picture-in-picture, a webcam
    inset, or a logo/watermark. Drag it on the preview to position; set size,
@@ -76,6 +80,9 @@ Two export modes (picked in the Export dialog):
   live preview in real time with mixed audio. Container is **MP4 (H.264)** when the
   WebView2 build supports it, otherwise **WebM (VP9/VP8)**.
 
+**📷 Frame** exports the current preview frame as a PNG — for a thumbnail, cover,
+or poster image.
+
 > Bundled dependency: `vendor/mp4-muxer.js` ([mp4-muxer](https://github.com/Vanilagy/mp4-muxer),
 > MIT) is vendored verbatim so precise export works offline with no build step. It
 > is the only third-party file in Mirage.
@@ -90,9 +97,11 @@ Two export modes (picked in the Export dialog):
 
 ## Shortcuts
 
-`Space` play/pause · `S` split clip at playhead · `Ctrl+D` duplicate selected ·
-`Ctrl+Z` undo · `Ctrl+Shift+Z` / `Ctrl+Y` redo · `Ctrl+S` save · `Ctrl+O` open ·
-`Delete` remove selected · `← / →` step one frame · click the timeline to seek.
+`Space` play/pause · `S` split at playhead · `Ctrl+D` duplicate ·
+`Ctrl+C` / `Ctrl+V` copy / paste selected · `Ctrl+Z` undo · `Ctrl+Shift+Z`/`Ctrl+Y` redo ·
+`Ctrl+S` save · `Ctrl+O` open · `Delete` remove selected · `← / →` or `, / .` step one
+frame · `Home` / `End` jump to start/end · `+` / `-` zoom timeline · click the timeline
+to seek · drag a clip edge to trim (snaps to the playhead and other edges).
 
 ## Roadmap
 

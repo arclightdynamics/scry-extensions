@@ -1,0 +1,19 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.aether",
+  "name": "Aether",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Focus soundscapes — layer realistic ambiences (rain, café, forest, fire…), shaped noise, and brainwave tones to concentrate and tune out distractions. Built for ADHD-style deep work.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["desktop.dock"],
+  "panel": {
+    "width": 460,
+    "height": 640,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

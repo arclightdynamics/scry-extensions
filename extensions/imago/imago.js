@@ -27,7 +27,7 @@
   let tool = "brush";
   let fg = "#22d3ee";
   let bg = "#0a0e1a";
-  const opt = { size: 14, opacity: 1, shapeFill: "fill", tolerance: 24, font: 48, fontFam: "system-ui", cropAspect: null };
+  const opt = { size: 14, opacity: 1, shapeFill: "fill", tolerance: 24, font: 48, fontFam: "system-ui", cropAspect: null, textOutline: false, textShadow: false, textAlign: "left", gradType: "fg-transparent" };
   let nextLayerId = 1;
 
   // ---- tools registry -----------------------------------------------------
@@ -40,6 +40,7 @@
     { id: "pencil", icon: "✏", key: "N", name: "Pencil" },
     { id: "eraser", icon: "🩹", key: "E", name: "Eraser" },
     { id: "bucket", icon: "🪣", key: "G", name: "Bucket" },
+    { id: "gradient", icon: "▤", key: "D", name: "Gradient" },
     { id: "picker", icon: "💉", key: "I", name: "Eyedropper" },
     { id: "sep" },
     { id: "line", icon: "╱", key: "U", name: "Line" },
@@ -51,7 +52,7 @@
   ];
   // Which option rows a tool shows.
   const usesSize = (t) => ["brush", "pencil", "eraser", "line", "rect", "ellipse"].includes(t);
-  const usesOpacity = (t) => ["brush", "pencil", "eraser", "bucket", "line", "rect", "ellipse", "text"].includes(t);
+  const usesOpacity = (t) => ["brush", "pencil", "eraser", "bucket", "line", "rect", "ellipse", "text", "gradient"].includes(t);
 
   // =========================================================================
   // Layers
@@ -62,7 +63,7 @@
     c.height = doc.height;
     const ctx = c.getContext("2d", { willReadFrequently: true });
     if (fill) { ctx.fillStyle = fill; ctx.fillRect(0, 0, c.width, c.height); }
-    return { id: nextLayerId++, name: name || `Layer ${nextLayerId}`, canvas: c, ctx, visible: true, opacity: 1, blend: "source-over" };
+    return { id: nextLayerId++, name: name || `Layer ${nextLayerId}`, canvas: c, ctx, visible: true, opacity: 1, blend: "source-over", locked: false };
   }
   const activeLayer = () => doc.layers[doc.active];
 
@@ -107,9 +108,29 @@
 
   // ---- overlay: selection marching ants + tool preview --------------------
   let antsOffset = 0;
+  let showGuides = false;
+  function drawGuides() {
+    const W = doc.width, H = doc.height;
+    octx.save();
+    octx.lineWidth = 1 / zoom;
+    // rule of thirds
+    octx.strokeStyle = "rgba(255,255,255,0.5)";
+    octx.beginPath();
+    for (let i = 1; i <= 2; i++) {
+      octx.moveTo((W * i) / 3, 0); octx.lineTo((W * i) / 3, H);
+      octx.moveTo(0, (H * i) / 3); octx.lineTo(W, (H * i) / 3);
+    }
+    octx.stroke();
+    // safe area (90%) — keep key content inside for social crops
+    octx.strokeStyle = "rgba(34,211,238,0.7)";
+    octx.setLineDash([6 / zoom, 5 / zoom]);
+    octx.strokeRect(W * 0.05, H * 0.05, W * 0.9, H * 0.9);
+    octx.restore();
+  }
   function drawOverlay(preview) {
     octx.clearRect(0, 0, doc.width, doc.height);
     if (preview) preview(octx);
+    if (showGuides) drawGuides();
     const s = doc.selection;
     if (s) {
       octx.save();
@@ -142,7 +163,7 @@
       width: doc.width, height: doc.height, active: doc.active,
       selection: doc.selection ? { ...doc.selection } : null,
       layers: doc.layers.map((l) => ({
-        id: l.id, name: l.name, visible: l.visible, opacity: l.opacity, blend: l.blend,
+        id: l.id, name: l.name, visible: l.visible, opacity: l.opacity, blend: l.blend, locked: !!l.locked,
         data: l.ctx.getImageData(0, 0, l.canvas.width, l.canvas.height),
       })),
     };
@@ -161,7 +182,7 @@
       c.width = state.width; c.height = state.height;
       const ctx = c.getContext("2d", { willReadFrequently: true });
       ctx.putImageData(s.data, 0, 0);
-      return { id: s.id, name: s.name, canvas: c, ctx, visible: s.visible, opacity: s.opacity, blend: s.blend };
+      return { id: s.id, name: s.name, canvas: c, ctx, visible: s.visible, opacity: s.opacity, blend: s.blend, locked: !!s.locked };
     });
     doc.active = clamp(state.active, 0, doc.layers.length - 1);
     nextLayerId = Math.max(nextLayerId, ...doc.layers.map((l) => l.id + 1));
@@ -192,8 +213,12 @@
   let drag = null;
   composite.addEventListener("pointerdown", onDown);
   overlay.addEventListener("pointerdown", onDown);
+  // Tools that write pixels into the active layer — blocked when it's locked.
+  const EDIT_TOOLS = ["brush", "pencil", "eraser", "bucket", "line", "rect", "ellipse", "text", "move", "gradient", "clone", "smudge"];
   function onDown(e) {
     if (e.button !== 0) return;
+    const a = activeLayer();
+    if (a && a.locked && EDIT_TOOLS.includes(tool)) { updateStatus(); $("#sg-selinfo").textContent = "layer locked 🔒"; return; }
     const p = toDoc(e);
     e.target.setPointerCapture(e.pointerId);
     drag = { start: p, last: p, ptr: e.pointerId, target: e.target, moved: false };
@@ -452,43 +477,111 @@
     move() {}, up() {},
   };
   function openTextEditor(p, e) {
-    const ed = document.createElement("input");
+    // Multi-line: a textarea so captions/quotes/titles can wrap. Enter = newline,
+    // Ctrl/Cmd+Enter or clicking away commits, Escape cancels.
+    const ed = document.createElement("textarea");
     ed.className = "sg-textedit";
+    ed.rows = 1;
+    ed.wrap = "off";
     ed.style.left = e.clientX - stage.getBoundingClientRect().left + "px";
     ed.style.top = e.clientY - stage.getBoundingClientRect().top - opt.font * 0.5 * zoom + "px";
     ed.style.fontSize = opt.font * zoom + "px";
     ed.style.fontFamily = opt.fontFam;
     ed.style.color = fg;
+    ed.style.textAlign = opt.textAlign;
+    ed.style.resize = "none";
+    ed.style.overflow = "hidden";
+    ed.style.lineHeight = "1.2";
+    ed.style.whiteSpace = "pre";
+    const autosize = () => { ed.style.height = "auto"; ed.style.height = ed.scrollHeight + "px"; ed.style.width = "auto"; ed.style.width = Math.max(40, ed.scrollWidth + 4) + "px"; };
     stage.appendChild(ed);
+    autosize();
     ed.focus();
+    let done = false;
     const commit = () => {
+      if (done) return; done = true;
       const text = ed.value;
       ed.remove();
-      if (!text) return;
+      if (!text.trim()) { recomposite(); return; }
       const a = activeLayer();
       withSelectionClip(a.ctx, (ctx) => {
         ctx.globalAlpha = opt.opacity;
-        ctx.fillStyle = fg;
         ctx.textBaseline = "top";
+        ctx.textAlign = opt.textAlign;
         ctx.font = `${opt.font}px ${opt.fontFam}`;
-        ctx.fillText(text, p.x, p.y - opt.font * 0.5);
+        const lh = opt.font * 1.2;
+        const lines = text.split("\n");
+        // Anchor x by alignment so multi-line blocks align as a group.
+        const tx = opt.textAlign === "left" ? p.x : opt.textAlign === "right" ? p.x : p.x;
+        let ty = p.y - opt.font * 0.5;
+        for (const line of lines) {
+          if (opt.textShadow) {
+            ctx.shadowColor = "rgba(0,0,0,0.55)";
+            ctx.shadowBlur = opt.font * 0.14;
+            ctx.shadowOffsetX = opt.font * 0.04;
+            ctx.shadowOffsetY = opt.font * 0.05;
+          }
+          if (opt.textOutline) {
+            ctx.lineWidth = Math.max(1, opt.font * 0.1);
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = bg;
+            ctx.strokeText(line, tx, ty);
+            ctx.shadowColor = "transparent";
+          }
+          ctx.fillStyle = fg;
+          ctx.fillText(line, tx, ty);
+          ctx.shadowColor = "transparent";
+          ty += lh;
+        }
         ctx.globalAlpha = 1;
+        ctx.textAlign = "left";
       });
       recomposite(); pushHistory();
     };
+    ed.addEventListener("input", autosize);
     ed.addEventListener("keydown", (k) => {
-      if (k.key === "Enter") { k.preventDefault(); commit(); }
-      else if (k.key === "Escape") ed.remove();
+      if (k.key === "Enter" && (k.ctrlKey || k.metaKey)) { k.preventDefault(); commit(); }
+      else if (k.key === "Escape") { done = true; ed.remove(); }
       k.stopPropagation();
     });
     ed.addEventListener("blur", commit);
   }
 
+  // ---- gradient -----------------------------------------------------------
+  function drawGradient(ctx, a, b, preview) {
+    const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+    const [r, g, bl] = hexToRgb(fg);
+    if (opt.gradType === "fg-bg") {
+      grad.addColorStop(0, fg); grad.addColorStop(1, bg);
+    } else {
+      grad.addColorStop(0, fg); grad.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+    }
+    ctx.save();
+    ctx.globalAlpha = opt.opacity * (preview ? 0.85 : 1);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, doc.width, doc.height);
+    ctx.restore();
+  }
+  const gradientHandler = {
+    down() {},
+    move(p, last, e) {
+      const end = e && e.shiftKey ? angleSnap(drag.start, p) : p;
+      livePreview = (ctx) => drawGradient(ctx, drag.start, end, true);
+      drawOverlay(livePreview);
+    },
+    up(p, e) {
+      const end = e && e.shiftKey ? angleSnap(drag.start, p) : p;
+      const a = activeLayer();
+      withSelectionClip(a.ctx, (ctx) => drawGradient(ctx, drag.start, end, false));
+      recomposite(); pushHistory();
+    },
+  };
+
   const handlers = {
     brush: paintHandler("brush"), pencil: paintHandler("pencil"), eraser: paintHandler("eraser"),
     line: shapeHandler("line"), rect: shapeHandler("rect"), ellipse: shapeHandler("ellipse"),
     marquee: marqueeHandler, lasso: lassoHandler, move: moveHandler, bucket: bucketHandler,
-    picker: pickerHandler, hand: handHandler, text: textHandler,
+    gradient: gradientHandler, picker: pickerHandler, hand: handHandler, text: textHandler,
   };
 
   // =========================================================================
@@ -504,6 +597,7 @@
     adjBase = activeLayer().ctx.getImageData(b.x, b.y, b.w, b.h);
   }
   function applyAdjLive() {
+    if (activeLayer().locked) { $("#sg-selinfo").textContent = "layer locked 🔒"; return; }
     if (!adjBase) ensureAdjBase();
     const b = selBounds();
     const src = adjBase.data;
@@ -558,6 +652,7 @@
   // instant filters
   function filterPixels(fn) {
     const b = selBounds(), a = activeLayer();
+    if (a.locked) { $("#sg-selinfo").textContent = "layer locked 🔒"; return; }
     const img = a.ctx.getImageData(b.x, b.y, b.w, b.h);
     fn(img.data, img.width, img.height);
     a.ctx.putImageData(img, b.x, b.y);
@@ -705,7 +800,9 @@
     $("#sg-shape-row").style.display = ["rect", "ellipse"].includes(id) ? "" : "none";
     $("#sg-tol-row").style.display = id === "bucket" ? "" : "none";
     $("#sg-font-row").style.display = id === "text" ? "" : "none";
+    $("#sg-textstyle-row").style.display = id === "text" ? "" : "none";
     $("#sg-aspect-row").style.display = id === "marquee" ? "" : "none";
+    $("#sg-grad-row").style.display = id === "gradient" ? "" : "none";
     $("#sg-size").parentElement.style.display = usesSize(id) ? "" : "none";
     $("#sg-opacity").parentElement.style.display = usesOpacity(id) ? "" : "none";
     stageWrap.style.cursor = id === "hand" ? "grab" : id === "text" ? "text" : "crosshair";
@@ -716,16 +813,28 @@
     doc.layers.forEach((l, i) => {
       const row = document.createElement("div");
       row.className = "sg-layer" + (i === doc.active ? " on" : "");
+      row.dataset.idx = i;
       row.onclick = () => { doc.active = i; renderLayers(); syncLayerControls(); };
+      row.oncontextmenu = (e) => openLayerMenu(e, i);
+      enableLayerReorder(row, l);
       const eye = document.createElement("span");
       eye.className = "eye" + (l.visible ? "" : " off"); eye.textContent = l.visible ? "👁" : "—";
       eye.onclick = (e) => { e.stopPropagation(); l.visible = !l.visible; recomposite(); renderLayers(); };
       const thumb = document.createElement("canvas");
-      thumb.className = "thumb"; thumb.width = 30; thumb.height = 24;
-      thumb.getContext("2d").drawImage(l.canvas, 0, 0, 30, 24);
+      thumb.className = "thumb"; thumb.width = 38; thumb.height = 38;
+      // draw the layer fit inside the square thumb, preserving the doc aspect
+      const tctx = thumb.getContext("2d");
+      const ts = Math.min(38 / doc.width, 38 / doc.height);
+      const tw = doc.width * ts, th = doc.height * ts;
+      tctx.drawImage(l.canvas, (38 - tw) / 2, (38 - th) / 2, tw, th);
       const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = l.name;
       nm.ondblclick = (e) => { e.stopPropagation(); editLayerName(nm, l); };
-      row.append(eye, thumb, nm);
+      const lock = document.createElement("span");
+      lock.className = "lock" + (l.locked ? " on" : "");
+      lock.textContent = l.locked ? "🔒" : "🔓";
+      lock.title = l.locked ? "Locked — click to unlock" : "Lock layer";
+      lock.onclick = (e) => { e.stopPropagation(); l.locked = !l.locked; renderLayers(); pushHistory(); };
+      row.append(eye, thumb, nm, lock);
       wrap.appendChild(row);
     });
     syncLayerControls();
@@ -736,6 +845,84 @@
     const done = () => { l.name = inp.value.trim() || l.name; renderLayers(); };
     inp.onblur = done; inp.onkeydown = (e) => { if (e.key === "Enter") done(); e.stopPropagation(); };
   }
+
+  // ---- layer drag-to-reorder (Photoshop-style restacking) ----------------
+  let dropLine = null;
+  function layerRows(excludeIdx) {
+    const wrap = $("#sg-layers");
+    return [...wrap.children].filter((el) => el.classList.contains("sg-layer")).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { el, idx: +el.dataset.idx, top: r.top, h: r.height };
+    }).filter((r) => excludeIdx == null || r.idx !== excludeIdx).sort((a, b) => a.top - b.top); // visual top→bottom
+  }
+  // Visual slot (#rows whose mid is above the pointer) → array index.
+  function dropSlot(clientY, from) {
+    const others = layerRows(from);
+    let slot = 0; for (const r of others) if (clientY > r.top + r.h / 2) slot++;
+    return { slot, others };
+  }
+  function positionDropLine(clientY, from) {
+    const wrap = $("#sg-layers"), wr = wrap.getBoundingClientRect();
+    const { slot, others } = dropSlot(clientY, from);
+    let y = 0;
+    if (others.length) {
+      if (slot === 0) y = others[0].top - wr.top;
+      else if (slot >= others.length) { const last = others[others.length - 1]; y = last.top + last.h - wr.top; }
+      else y = others[slot].top - wr.top;
+    }
+    if (!dropLine) { dropLine = document.createElement("div"); dropLine.className = "sg-drop-line"; wrap.appendChild(dropLine); }
+    dropLine.style.top = (y + wrap.scrollTop) + "px";
+  }
+  function enableLayerReorder(row, layer) {
+    row.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || e.target.closest(".eye") || e.target.closest("input")) return;
+      const startY = e.clientY; let dragging = false;
+      const from = doc.layers.indexOf(layer);
+      const onMove = (ev) => {
+        if (!dragging) { if (Math.abs(ev.clientY - startY) < 5) return; dragging = true; row.classList.add("dragging"); row.onclick = null; }
+        positionDropLine(ev.clientY, from);
+      };
+      const onUp = (ev) => {
+        window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp);
+        if (dropLine) { dropLine.remove(); dropLine = null; }
+        if (!dragging) return;
+        const { slot, others } = dropSlot(ev.clientY, from);
+        const target = clamp(others.length - slot, 0, doc.layers.length - 1);
+        if (target !== from) {
+          const [m] = doc.layers.splice(from, 1);
+          doc.layers.splice(target, 0, m);
+          doc.active = doc.layers.indexOf(m);
+          recomposite(); renderLayers(); syncLayerControls(); pushHistory();
+        } else renderLayers();
+      };
+      window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp);
+    });
+  }
+
+  // ---- layer right-click context menu ------------------------------------
+  function closeLayerMenu() { const m = $("#sg-ctx"); if (m) m.remove(); }
+  function openLayerMenu(e, i) {
+    e.preventDefault();
+    doc.active = i; renderLayers(); syncLayerControls();
+    closeLayerMenu();
+    const menu = document.createElement("div"); menu.className = "sg-ctx"; menu.id = "sg-ctx";
+    const items = [
+      ["layer-dup", "Duplicate Layer"], ["layer-del", "Delete Layer"], ["sep"],
+      ["layer-merge", "Merge Down"], ["layer-mergevis", "Merge Visible"], ["layer-flatten", "Flatten Image"], ["sep"],
+      ["rename", "Rename…"],
+    ];
+    for (const it of items) {
+      if (it[0] === "sep") { const s = document.createElement("div"); s.className = "sg-ctx-sep"; menu.appendChild(s); continue; }
+      const b = document.createElement("button"); b.textContent = it[1];
+      if (it[0] === "rename") b.onclick = () => { closeLayerMenu(); const nm = document.querySelector(`#sg-layers .sg-layer[data-idx="${doc.active}"] .nm`); if (nm) editLayerName(nm, doc.layers[doc.active]); };
+      else { b.dataset.act = it[0]; b.onclick = () => closeLayerMenu(); } // global click handler runs the action
+      menu.appendChild(b);
+    }
+    document.body.appendChild(menu);
+    menu.style.left = Math.min(e.clientX, window.innerWidth - menu.offsetWidth - 6) + "px";
+    menu.style.top = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 6) + "px";
+  }
+  window.addEventListener("pointerdown", (e) => { if (!e.target.closest("#sg-ctx")) closeLayerMenu(); }, true);
   function syncLayerControls() {
     const l = activeLayer(); if (!l) return;
     $("#sg-layer-opacity").value = Math.round(l.opacity * 100);
@@ -1145,7 +1332,19 @@
         </select>
       </div>
       <div class="sg-mrow" id="sg-xq-row"><label>Quality</label><input type="range" id="sg-xq" min="10" max="100" value="92"><span class="val" id="sg-xq-v">92</span></div>
-      <div class="sg-mrow"><label>Size</label><span class="sg-unit">${doc.width} × ${doc.height} px</span></div>
+      <div class="sg-mrow"><label>Resize</label>
+        <select id="sg-xresize" style="flex:1">
+          <option value="">Keep original (${doc.width} × ${doc.height})</option>
+          ${presetOptionsHtml()}
+        </select>
+      </div>
+      <div class="sg-mrow" id="sg-xfit-row" style="display:none"><label>Fit</label>
+        <select id="sg-xfit" style="flex:1">
+          <option value="cover">Fill &amp; crop</option>
+          <option value="contain">Fit (letterbox)</option>
+          <option value="stretch">Stretch</option>
+        </select>
+      </div>
       <div class="sg-mactions">
         <button class="sg-btn" data-x="copy" title="Copy the flattened image to the clipboard">⧉ Copy</button>
         <span style="flex:1"></span>
@@ -1154,19 +1353,50 @@
       </div>`;
     const fmtEl = body.querySelector("#sg-xfmt"), qEl = body.querySelector("#sg-xq");
     const qRow = body.querySelector("#sg-xq-row");
+    const resizeEl = body.querySelector("#sg-xresize"), fitRow = body.querySelector("#sg-xfit-row"), fitEl = body.querySelector("#sg-xfit");
     const syncQ = () => { qRow.style.display = fmtEl.value === "png" ? "none" : ""; };
     syncQ(); fmtEl.onchange = syncQ;
+    resizeEl.onchange = () => { fitRow.style.display = resizeEl.value ? "" : "none"; };
     qEl.oninput = () => { body.querySelector("#sg-xq-v").textContent = qEl.value; };
+    const finalCanvas = (fmt) => {
+      const bgFill = fmt === "jpeg" ? "#ffffff" : null;
+      let cv = flattenCanvas(bgFill);
+      if (resizeEl.value) {
+        const [tw, th] = resizeEl.value.split("x").map(Number);
+        cv = exportCanvasResized(cv, tw, th, fitEl.value, bgFill);
+      }
+      return cv;
+    };
     body.querySelector('[data-x="cancel"]').onclick = close;
-    body.querySelector('[data-x="copy"]').onclick = () => { copyToClipboard(); close(); };
+    body.querySelector('[data-x="copy"]').onclick = () => {
+      const cv = finalCanvas("png");
+      cv.toBlob(async (b) => {
+        try { await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]); toast("Image copied to clipboard"); }
+        catch (e) { toast("Couldn't copy to clipboard: " + ((e && e.message) || e)); }
+      }, "image/png");
+      close();
+    };
     body.querySelector('[data-x="save"]').onclick = () => {
       const fmt = fmtEl.value;
       const mime = fmt === "jpeg" ? "image/jpeg" : fmt === "webp" ? "image/webp" : "image/png";
       const q = +qEl.value / 100;
-      const cv = flattenCanvas(fmt === "jpeg" ? "#ffffff" : null);
+      const cv = finalCanvas(fmt);
       cv.toBlob((b) => { downloadBlob(b, "imago-export." + (fmt === "jpeg" ? "jpg" : fmt)); toast("Exported " + fmt.toUpperCase()); }, mime, fmt === "png" ? undefined : q);
       close();
     };
+  }
+  // Scale a flattened canvas into a target size for export (no change to the doc).
+  function exportCanvasResized(src, tw, th, fit, bgFill) {
+    const out = document.createElement("canvas"); out.width = tw; out.height = th;
+    const o = out.getContext("2d");
+    if (bgFill) { o.fillStyle = bgFill; o.fillRect(0, 0, tw, th); }
+    o.imageSmoothingEnabled = true; o.imageSmoothingQuality = "high";
+    const sw = src.width, sh = src.height;
+    let dw, dh, dx, dy;
+    if (fit === "stretch") { dw = tw; dh = th; dx = 0; dy = 0; }
+    else { const sc = fit === "cover" ? Math.max(tw / sw, th / sh) : Math.min(tw / sw, th / sh); dw = sw * sc; dh = sh * sc; dx = (tw - dw) / 2; dy = (th - dh) / 2; }
+    o.drawImage(src, dx, dy, dw, dh);
+    return out;
   }
 
   // =========================================================================
@@ -1228,6 +1458,7 @@
       case "look-cool": case "look-punch": case "look-fade": case "look-matte":
         applyLook(act.slice(5)); break;
       case "f-vignette": applyVignette(); break;
+      case "guides": showGuides = !showGuides; $("#sg-guides-btn")?.classList.toggle("on", showGuides); drawOverlay(); break;
     }
   });
 
@@ -1247,6 +1478,10 @@
   for (const id of ["bright", "contrast", "sat", "hue"]) bind("sg-" + id, (v) => { $("#sg-" + id + "-v").textContent = v; applyAdjLive(); });
   bind("sg-bgtol", (v) => { $("#sg-bgtol-v").textContent = v; });
   $("#sg-aspect").addEventListener("change", (e) => { opt.cropAspect = e.target.value === "free" ? null : +e.target.value; });
+  $("#sg-textalign").addEventListener("change", (e) => { opt.textAlign = e.target.value; });
+  $("#sg-textoutline").addEventListener("change", (e) => { opt.textOutline = e.target.checked; });
+  $("#sg-textshadow").addEventListener("change", (e) => { opt.textShadow = e.target.checked; });
+  $("#sg-gradtype").addEventListener("change", (e) => { opt.gradType = e.target.value; });
 
   $("#sg-colorpick").addEventListener("input", (e) => setFg(e.target.value));
   $("#sg-hex").addEventListener("change", (e) => { const v = e.target.value.trim(); if (/^#?[0-9a-fA-F]{6}$/.test(v)) setFg(v[0] === "#" ? v : "#" + v); });
@@ -1268,7 +1503,7 @@
     if ((e.ctrlKey || e.metaKey) && k === "d") { e.preventDefault(); doc.selection = null; drawOverlay(); updateStatus(); return; }
     if ((e.ctrlKey || e.metaKey) && k === "a") { e.preventDefault(); doc.selection = { x: 0, y: 0, w: doc.width, h: doc.height }; drawOverlay(); updateStatus(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (k === "delete" || k === "backspace") { e.preventDefault(); const b = selBounds(); activeLayer().ctx.clearRect(b.x, b.y, b.w, b.h); recomposite(); pushHistory(); return; }
+    if (k === "delete" || k === "backspace") { e.preventDefault(); if (activeLayer().locked) { $("#sg-selinfo").textContent = "layer locked 🔒"; return; } const b = selBounds(); activeLayer().ctx.clearRect(b.x, b.y, b.w, b.h); recomposite(); pushHistory(); return; }
     if (k === "[") { opt.size = clamp(opt.size - 2, 1, 400); $("#sg-size").value = opt.size; $("#sg-size-v").textContent = opt.size; return; }
     if (k === "]") { opt.size = clamp(opt.size + 2, 1, 400); $("#sg-size").value = opt.size; $("#sg-size-v").textContent = opt.size; return; }
     if (k === "x") { const t = fg; setFg(bg); setBg(t); return; }
