@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "updated": "2026-06-25T02:09:21Z",
+  "extensions": [
+    {
+      "id": "com.enterscry.clock",
+      "name": "World Clock",
+      "version": "1.0.0",
+      "description": "Live time across a few time zones, on your desktop.",
+      "author": "Scry",
+      "surfaces": [
+        "desktop.dock"
+      ],
+      "permissions": [],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.clock-1.0.0.zip",
+      "sha256": "df2db37509ccf9de83f8551c1e7b0d0c03c8228a685337b5b9e13970696ac965",
+      "size": 2194,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/clock/icon.svg"
+    },
+    {
+      "id": "com.enterscry.imago",
+      "name": "Imago",
+      "version": "1.0.0",
+      "description": "A layered raster image editor — brushes, selections, shapes, text, adjustments, filters, and social-media size presets.",
+      "author": "Scry",
+      "surfaces": [
+        "desktop.dock"
+      ],
+      "permissions": [
+        "clipboard",
+        "downloads"
+      ],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.imago-1.0.0.zip",
+      "sha256": "7b9e94526fe2e8c49a3bee5908119c6456019338230bccbd7ed75d80bcba6eb2",
+      "size": 25225,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/imago/icon.svg"
+    },
+    {
+      "id": "com.enterscry.mirage",
+      "name": "Mirage",
+      "version": "1.0.0",
+      "description": "Social video studio — clip timeline, captions/subtitles, and one-click export presets for TikTok, Reels, Shorts, YouTube and more.",
+      "author": "Scry",
+      "surfaces": [
+        "desktop.dock"
+      ],
+      "permissions": [
+        "downloads"
+      ],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.mirage-1.0.0.zip",
+      "sha256": "2eaf710908ac17eed3f48399db2a30d8d865e73007d44c95eb6f1452b62f6d71",
+      "size": 44696,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/mirage/icon.svg"
+    }
+  ]
+}
