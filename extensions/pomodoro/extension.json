@@ -1,0 +1,19 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.pomodoro",
+  "name": "Pomodoro",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A focus timer with work/break cycles, a progress ring, and a session counter. Stay in flow.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": {
+    "width": 360,
+    "height": 460,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.convert",
+  "name": "Convert",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A quick unit converter — length, mass, temperature, data, time, and speed. Live, two-way.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": {
+    "width": 380,
+    "height": 440,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

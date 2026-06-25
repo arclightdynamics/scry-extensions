@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Convert</title>
+<style>
+  :root {
+    --bg: #05090c; --fg: #eef4f5; --fg2: #aab8bd; --fg3: #71828a;
+    --cyan: #5ee0d7; --violet: #8b7dff; --line: rgba(255,255,255,.1); --line2: rgba(255,255,255,.16);
+    --mono: ui-monospace,"JetBrains Mono",Consolas,monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: system-ui,-apple-system,sans-serif;
+    height: 100vh; display: flex; flex-direction: column; padding: 16px; gap: 14px; -webkit-font-smoothing: antialiased; }
+  .cats { display: flex; flex-wrap: wrap; gap: 5px; }
+  .cats button { font-family: var(--mono); font-size: 10.5px; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--fg3); cursor: pointer; transition: .12s; }
+  .cats button.on { border-color: rgba(139,125,255,.5); background: rgba(139,125,255,.12); color: var(--violet); }
+  .row { display: flex; flex-direction: column; gap: 7px; }
+  .field { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.3); border: 1px solid var(--line2);
+    border-radius: 11px; padding: 12px 14px; transition: border-color .15s; }
+  .field:focus-within { border-color: rgba(94,224,215,.45); }
+  .field input { flex: 1; background: transparent; border: none; outline: none; color: var(--fg);
+    font-family: var(--mono); font-size: 22px; min-width: 0; }
+  .field select { background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 7px;
+    color: var(--fg2); font-family: var(--mono); font-size: 12px; padding: 6px 8px; cursor: pointer; }
+  .swap { align-self: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line2);
+    background: rgba(94,224,215,.08); color: var(--cyan); cursor: pointer; font-size: 15px; margin: -2px 0; transition: .12s; }
+  .swap:hover { background: rgba(94,224,215,.18); transform: rotate(180deg); }
+  .note { font-family: var(--mono); font-size: 10px; color: var(--fg3); text-align: center; margin-top: auto; }
+</style>
+</head>
+<body>
+  <div class="cats" id="cats"></div>
+  <div class="row">
+    <div class="field"><input id="a" type="text" inputmode="decimal" value="1" /><select id="ua"></select></div>
+    <button class="swap" id="swap" title="Swap">⇅</button>
+    <div class="field"><input id="b" type="text" inputmode="decimal" /><select id="ub"></select></div>
+  </div>
+  <div class="note" id="note"></div>
+
+<script>
+(function () {
+  // factor = value in base unit per 1 of this unit (linear). Temperature is special.
+  var CATS = {
+    Length: { base: "m", units: { km: 1000, m: 1, cm: .01, mm: .001, mi: 1609.344, yd: .9144, ft: .3048, in: .0254, nmi: 1852 } },
+    Mass: { base: "kg", units: { t: 1000, kg: 1, g: .001, mg: .000001, lb: .45359237, oz: .028349523, st: 6.35029318 } },
+    Temperature: { base: "C", units: { "°C": "C", "°F": "F", K: "K" } },
+    Data: { base: "B", units: { TB: 1e12, GB: 1e9, MB: 1e6, KB: 1e3, B: 1, bit: .125, Gib: 134217728, Mib: 131072, Kib: 128 } },
+    Time: { base: "s", units: { wk: 604800, d: 86400, h: 3600, min: 60, s: 1, ms: .001 } },
+    Speed: { base: "mps", units: { "m/s": 1, "km/h": .2777778, mph: .44704, kn: .5144444, "ft/s": .3048 } }
+  };
+  var cat = "Length";
+
+  function tempTo(v, from, to) {
+    var c = from === "C" ? v : from === "F" ? (v - 32) * 5 / 9 : v - 273.15;
+    return to === "C" ? c : to === "F" ? c * 9 / 5 + 32 : c + 273.15;
+  }
+  function conv(v, from, to) {
+    var u = CATS[cat].units;
+    if (cat === "Temperature") return tempTo(v, u[from], u[to]);
+    return v * u[from] / u[to];
+  }
+  function trim(n) {
+    if (!isFinite(n)) return "";
+    var s = Math.abs(n) >= 1e15 || (Math.abs(n) < 1e-6 && n !== 0) ? n.toExponential(6) : (Math.round(n * 1e8) / 1e8).toString();
+    return s;
+  }
+
+  var catsEl = document.getElementById("cats"), aEl = document.getElementById("a"), bEl = document.getElementById("b"),
+      uaEl = document.getElementById("ua"), ubEl = document.getElementById("ub"), noteEl = document.getElementById("note");
+
+  function fillUnits() {
+    var keys = Object.keys(CATS[cat].units);
+    [uaEl, ubEl].forEach(function (sel, i) {
+      sel.innerHTML = keys.map(function (k) { return '<option>' + k + '</option>'; }).join("");
+      sel.selectedIndex = i === 0 ? 0 : Math.min(1, keys.length - 1);
+    });
+  }
+  function renderCats() {
+    catsEl.innerHTML = "";
+    Object.keys(CATS).forEach(function (c) {
+      var b = document.createElement("button"); b.textContent = c; if (c === cat) b.className = "on";
+      b.onclick = function () { cat = c; renderCats(); fillUnits(); calc("a"); }; catsEl.appendChild(b);
+    });
+  }
+  function calc(src) {
+    var from, to, val, outEl;
+    if (src === "a") { val = parseFloat(aEl.value); from = uaEl.value; to = ubEl.value; outEl = bEl; }
+    else { val = parseFloat(bEl.value); from = ubEl.value; to = uaEl.value; outEl = aEl; }
+    if (isNaN(val)) { outEl.value = ""; noteEl.textContent = ""; return; }
+    var r = conv(val, from, to);
+    outEl.value = trim(r);
+    noteEl.textContent = trim(parseFloat(aEl.value) || 0) + " " + uaEl.value + "  =  " + trim(conv(parseFloat(aEl.value) || 0, uaEl.value, ubEl.value)) + " " + ubEl.value;
+  }
+
+  aEl.addEventListener("input", function () { calc("a"); });
+  bEl.addEventListener("input", function () { calc("b"); });
+  uaEl.addEventListener("change", function () { calc("a"); });
+  ubEl.addEventListener("change", function () { calc("a"); });
+  document.getElementById("swap").addEventListener("click", function () {
+    var t = uaEl.selectedIndex; uaEl.selectedIndex = ubEl.selectedIndex; ubEl.selectedIndex = t;
+    aEl.value = bEl.value || aEl.value; calc("a");
+  });
+
+  renderCats(); fillUnits(); calc("a");
+})();
+</script>
+</body>
+</html>
