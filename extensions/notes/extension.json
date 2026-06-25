@@ -1,0 +1,19 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.notes",
+  "name": "Notes",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A fast markdown scratchpad with live preview. Autosaves locally; multiple notes in a sidebar.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": {
+    "width": 720,
+    "height": 520,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

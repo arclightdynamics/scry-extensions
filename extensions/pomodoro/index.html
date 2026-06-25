@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pomodoro</title>
+<style>
+  :root {
+    --bg: #05090c; --fg: #eef4f5; --fg2: #aab8bd; --fg3: #71828a;
+    --cyan: #5ee0d7; --amber: #f5a623; --green: #7ed98a; --line: rgba(255,255,255,.1);
+    --mono: ui-monospace,"JetBrains Mono",Consolas,monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: radial-gradient(ellipse at 50% 0%, rgba(245,166,35,.07), transparent 60%), var(--bg);
+    color: var(--fg); font-family: system-ui,-apple-system,sans-serif; height: 100vh; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; -webkit-font-smoothing: antialiased; }
+  .mode { display: flex; gap: 6px; }
+  .mode button { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.02);
+    color: var(--fg3); cursor: pointer; transition: .12s; }
+  .mode button.on { color: var(--fg); }
+  .mode button.on[data-m="focus"] { border-color: rgba(245,166,35,.5); background: rgba(245,166,35,.1); color: var(--amber); }
+  .mode button.on[data-m="short"] { border-color: rgba(94,224,215,.5); background: rgba(94,224,215,.1); color: var(--cyan); }
+  .mode button.on[data-m="long"] { border-color: rgba(126,217,138,.5); background: rgba(126,217,138,.1); color: var(--green); }
+
+  .ring { position: relative; width: 220px; height: 220px; }
+  svg { transform: rotate(-90deg); }
+  .track { stroke: rgba(255,255,255,.07); }
+  .prog { stroke: var(--amber); stroke-linecap: round; transition: stroke-dashoffset .3s linear, stroke .3s; }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .time { font-family: var(--mono); font-size: 46px; font-weight: 500; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  .label { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--fg3); }
+
+  .ctl { display: flex; gap: 10px; }
+  .ctl button { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; padding: 11px 0; width: 104px;
+    border-radius: 9px; cursor: pointer; transition: .12s; }
+  .start { background: var(--amber); color: #1a1206; border: none; font-weight: 600; }
+  .start.run { background: rgba(245,166,35,.16); color: var(--amber); border: 1px solid rgba(245,166,35,.5); }
+  .reset { background: none; border: 1px solid var(--line); color: var(--fg3); }
+  .reset:hover { color: var(--fg); }
+  .count { font-family: var(--mono); font-size: 11px; color: var(--fg3); }
+  .count b { color: var(--amber); }
+</style>
+</head>
+<body>
+  <div class="mode" id="mode">
+    <button data-m="focus" class="on">Focus</button>
+    <button data-m="short">Short</button>
+    <button data-m="long">Long</button>
+  </div>
+  <div class="ring">
+    <svg width="220" height="220">
+      <circle class="track" cx="110" cy="110" r="100" fill="none" stroke-width="10"/>
+      <circle class="prog" id="prog" cx="110" cy="110" r="100" fill="none" stroke-width="10"/>
+    </svg>
+    <div class="center">
+      <div class="time" id="time">25:00</div>
+      <div class="label" id="label">Focus</div>
+    </div>
+  </div>
+  <div class="ctl">
+    <button class="start" id="start">Start</button>
+    <button class="reset" id="reset">Reset</button>
+  </div>
+  <div class="count">Completed today: <b id="count">0</b></div>
+
+<script>
+(function () {
+  var DUR = { focus: 25 * 60, short: 5 * 60, long: 15 * 60 };
+  var LABEL = { focus: "Focus", short: "Short break", long: "Long break" };
+  var COLOR = { focus: "#f5a623", short: "#5ee0d7", long: "#7ed98a" };
+  var R = 100, C = 2 * Math.PI * R;
+  var mode = "focus", left = DUR.focus, running = false, tick = null;
+  var todayKey = "scry.pomodoro." + new Date().toISOString().slice(0, 10);
+  var done = parseInt(localStorage.getItem(todayKey) || "0", 10);
+
+  var timeEl = document.getElementById("time"), labelEl = document.getElementById("label"),
+      progEl = document.getElementById("prog"), startEl = document.getElementById("start"),
+      countEl = document.getElementById("count");
+  progEl.style.strokeDasharray = C;
+  countEl.textContent = done;
+
+  function fmt(s) { var m = Math.floor(s / 60), x = s % 60; return (m < 10 ? "0" : "") + m + ":" + (x < 10 ? "0" : "") + x; }
+  function render() {
+    timeEl.textContent = fmt(left);
+    labelEl.textContent = LABEL[mode];
+    var frac = 1 - left / DUR[mode];
+    progEl.style.strokeDashoffset = C * (1 - frac);
+    progEl.style.stroke = COLOR[mode];
+    startEl.textContent = running ? "Pause" : (left === DUR[mode] ? "Start" : "Resume");
+    startEl.classList.toggle("run", running);
+    document.title = (running ? fmt(left) + " · " : "") + "Pomodoro";
+  }
+  function setMode(m) { mode = m; left = DUR[m]; stop(); document.querySelectorAll("#mode button").forEach(function (b) { b.classList.toggle("on", b.dataset.m === m); }); render(); }
+  function stop() { running = false; if (tick) { clearInterval(tick); tick = null; } }
+  function start() {
+    if (running) { stop(); render(); return; }
+    running = true;
+    tick = setInterval(function () {
+      left--;
+      if (left <= 0) {
+        stop();
+        if (mode === "focus") { done++; localStorage.setItem(todayKey, String(done)); countEl.textContent = done; }
+        flash();
+        setMode(mode === "focus" ? "short" : "focus");
+        return;
+      }
+      render();
+    }, 1000);
+    render();
+  }
+  function flash() {
+    try { var a = new (window.AudioContext || window.webkitAudioContext)(); var o = a.createOscillator(), g = a.createGain();
+      o.connect(g); g.connect(a.destination); o.frequency.value = 660; g.gain.value = .08; o.start();
+      setTimeout(function () { o.frequency.value = 880; }, 150); setTimeout(function () { o.stop(); a.close(); }, 320); } catch (e) {}
+    document.body.animate([{ filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 500 });
+  }
+
+  document.getElementById("mode").addEventListener("click", function (e) { if (e.target.dataset.m) setMode(e.target.dataset.m); });
+  startEl.addEventListener("click", start);
+  document.getElementById("reset").addEventListener("click", function () { left = DUR[mode]; stop(); render(); });
+  render();
+})();
+</script>
+</body>
+</html>
