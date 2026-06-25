@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-06-25T02:09:21Z",
+  "updated": "2026-06-25T02:15:54Z",
   "extensions": [
     {
       "id": "com.enterscry.clock",
@@ -14,9 +14,26 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.clock-1.0.0.zip",
-      "sha256": "df2db37509ccf9de83f8551c1e7b0d0c03c8228a685337b5b9e13970696ac965",
+      "sha256": "abceef3d67dcdf7e55d516fdf3bafe821a3fb919983b94292dbd080f7faa589b",
       "size": 2194,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/clock/icon.svg"
+    },
+    {
+      "id": "com.enterscry.convert",
+      "name": "Convert",
+      "version": "1.0.0",
+      "description": "A quick unit converter — length, mass, temperature, data, time, and speed. Live, two-way.",
+      "author": "Scry",
+      "surfaces": [
+        "pane",
+        "desktop.dock"
+      ],
+      "permissions": [],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.convert-1.0.0.zip",
+      "sha256": "da4f27221617d3045f441d6cfb8f48c6bcd4deb4cb7f5f9a09ad32258655cda5",
+      "size": 3296,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/convert/icon.svg"
     },
     {
       "id": "com.enterscry.imago",
@@ -33,7 +50,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.imago-1.0.0.zip",
-      "sha256": "7b9e94526fe2e8c49a3bee5908119c6456019338230bccbd7ed75d80bcba6eb2",
+      "sha256": "d1e412c09b55fae77d00b11e56e964dcc29f03d67035a792278ce1a2e440d6ec",
       "size": 25225,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/imago/icon.svg"
     },
@@ -51,9 +68,43 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.mirage-1.0.0.zip",
-      "sha256": "2eaf710908ac17eed3f48399db2a30d8d865e73007d44c95eb6f1452b62f6d71",
+      "sha256": "433fdf4309f5c2d39a9df6a0b582fdcfdb7900df7af0262fe4a7b74383932683",
       "size": 44696,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/mirage/icon.svg"
+    },
+    {
+      "id": "com.enterscry.notes",
+      "name": "Notes",
+      "version": "1.0.0",
+      "description": "A fast markdown scratchpad with live preview. Autosaves locally; multiple notes in a sidebar.",
+      "author": "Scry",
+      "surfaces": [
+        "pane",
+        "desktop.dock"
+      ],
+      "permissions": [],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.notes-1.0.0.zip",
+      "sha256": "3238f56b6df9bc0372b55c8651e6d25883f92dd6e23cb075303f4abe999e3910",
+      "size": 4559,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/notes/icon.svg"
+    },
+    {
+      "id": "com.enterscry.pomodoro",
+      "name": "Pomodoro",
+      "version": "1.0.0",
+      "description": "A focus timer with work/break cycles, a progress ring, and a session counter. Stay in flow.",
+      "author": "Scry",
+      "surfaces": [
+        "pane",
+        "desktop.dock"
+      ],
+      "permissions": [],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.pomodoro-1.0.0.zip",
+      "sha256": "d1d04cee345a9138f87c8d22abe472aca904ba0487767d22078af41b3d644433",
+      "size": 3400,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/pomodoro/icon.svg"
     }
   ]
 }

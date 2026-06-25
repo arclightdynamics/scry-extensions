@@ -79,13 +79,22 @@ jobs:
           files: dist/*
 
       - name: Commit regenerated index.json to main
+        # Best-effort: the release asset is the source of truth, so this only
+        # keeps a browsable copy on main current. Retry to ride out a concurrent
+        # push rather than failing the whole run.
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set -uo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout main
-          cp dist/index.json index.json
-          git add index.json
-          git diff --staged --quiet || git commit -m "chore: regenerate catalog [skip ci]"
-          git push origin HEAD:main
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -B main origin/main
+            cp dist/index.json index.json
+            git add index.json
+            if git diff --staged --quiet; then echo "no change"; exit 0; fi
+            git commit -m "chore: regenerate catalog [skip ci]"
+            if git push origin HEAD:main; then echo "pushed"; exit 0; fi
+            echo "push rejected, retrying ($attempt)…"; sleep 3
+          done
+          echo "could not update main; release asset is still authoritative"
