@@ -27,6 +27,9 @@ and reload.
 | Extension | Description |
 |-----------|-------------|
 | **World Clock** (`clock`) | Live time across a few time zones. |
+| **Notes** (`notes`) | Markdown scratchpad with live preview, multi-note sidebar, autosave. |
+| **Pomodoro** (`pomodoro`) | Focus timer with work/break cycles, progress ring, session count. |
+| **Convert** (`convert`) | Two-way unit converter — length, mass, temp, data, time, speed. |
 | **Mirage** (`mirage`) | Social video studio — clip timeline, captions, export presets. |
 | **Imago** (`imago`) | Layered raster image editor — brushes, selections, filters. |
 | `_template` | Starter you copy to build your own (not published to the catalog). |
