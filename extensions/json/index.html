@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JSON</title>
+<style>
+  :root {
+    --bg: #05090c; --fg: #eef4f5; --fg2: #aab8bd; --fg3: #71828a; --fg4: #45555c;
+    --cyan: #5ee0d7; --gold: #f5c98f; --violet: #8b7dff; --green: #7ed98a; --red: #ff6b6b;
+    --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.15);
+    --mono: ui-monospace,"JetBrains Mono",Consolas,monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: system-ui,-apple-system,sans-serif;
+    height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+  .bar { display: flex; align-items: center; gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .bar .ttl { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--cyan); flex: 1; }
+  .bar button { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; padding: 6px 11px; border-radius: 7px;
+    border: 1px solid var(--line2); background: rgba(255,255,255,.02); color: var(--fg2); cursor: pointer; transition: .12s; }
+  .bar button:hover { border-color: rgba(94,224,215,.4); color: var(--cyan); }
+  .bar button.prim { background: rgba(94,224,215,.12); border-color: rgba(94,224,215,.4); color: var(--cyan); }
+  .panes { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+  textarea { width: 100%; height: 100%; resize: none; background: var(--bg); color: var(--fg2); border: none; outline: none;
+    padding: 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; tab-size: 2; }
+  .out { border-left: 1px solid var(--line); overflow: auto; padding: 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; white-space: pre; }
+  .out .k { color: var(--cyan); } .out .s { color: var(--green); } .out .n { color: var(--gold); }
+  .out .b { color: var(--violet); } .out .nl { color: var(--fg4); } .out .p { color: var(--fg3); }
+  .status { padding: 7px 12px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; display: flex; gap: 8px; align-items: center; }
+  .status.ok { color: var(--green); } .status.err { color: var(--red); }
+  .status .meta { margin-left: auto; color: var(--fg3); }
+  ::-webkit-scrollbar { width: 9px; height: 9px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="ttl">{ } JSON</span>
+    <button class="prim" id="format">Format</button>
+    <button id="minify">Minify</button>
+    <button id="sample">Sample</button>
+    <button id="copy">Copy</button>
+    <button id="clear">Clear</button>
+  </div>
+  <div class="panes">
+    <textarea id="in" placeholder='Paste JSON here…' spellcheck="false"></textarea>
+    <div class="out" id="out"></div>
+  </div>
+  <div class="status" id="status">Ready</div>
+
+<script>
+(function () {
+  var inEl=document.getElementById('in'),outEl=document.getElementById('out'),statusEl=document.getElementById('status');
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  // Syntax-highlight a pretty-printed JSON string.
+  function highlight(json){
+    return esc(json).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+      function(m){var c='n';if(/^"/.test(m)){c=/:$/.test(m)?'k':'s';}else if(/true|false/.test(m)){c='b';}else if(/null/.test(m)){c='nl';}return '<span class="'+c+'">'+m+'</span>';});
+  }
+  function stats(obj){
+    var keys=0,depth=0;
+    (function walk(o,d){if(d>depth)depth=d;if(o&&typeof o==='object'){var k=Object.keys(o);if(!Array.isArray(o))keys+=k.length;k.forEach(function(x){walk(o[x],d+1);});}})(obj,0);
+    return keys+' keys · depth '+depth;
+  }
+  function run(pretty){
+    var raw=inEl.value;
+    if(!raw.trim()){outEl.innerHTML='';statusEl.className='status';statusEl.innerHTML='Ready';return;}
+    try{
+      var obj=JSON.parse(raw);
+      var formatted=pretty?JSON.stringify(obj,null,2):JSON.stringify(obj);
+      outEl.innerHTML=highlight(formatted);
+      var bytes=new Blob([formatted]).size;
+      statusEl.className='status ok';
+      statusEl.innerHTML='✓ Valid JSON <span class="meta">'+stats(obj)+' · '+bytes+' B</span>';
+      run._last=formatted;
+    }catch(e){
+      outEl.innerHTML='';
+      var msg=String(e.message||e);
+      var m=msg.match(/position (\d+)/);
+      if(m){var pos=+m[1];var before=raw.slice(0,pos);var line=before.split('\n').length;var col=pos-before.lastIndexOf('\n');msg+=' (line '+line+', col '+col+')';}
+      statusEl.className='status err';
+      statusEl.innerHTML='✕ '+esc(msg);
+      run._last=null;
+    }
+  }
+  document.getElementById('format').onclick=function(){run(true);};
+  document.getElementById('minify').onclick=function(){run(false);};
+  document.getElementById('copy').onclick=function(){if(run._last&&navigator.clipboard){navigator.clipboard.writeText(run._last);var s=statusEl.innerHTML;statusEl.innerHTML='Copied to clipboard';setTimeout(function(){statusEl.innerHTML=s;},900);}};
+  document.getElementById('clear').onclick=function(){inEl.value='';run(true);inEl.focus();};
+  document.getElementById('sample').onclick=function(){inEl.value=JSON.stringify({name:"Scry",version:"1.0.0",extensions:["palette","json","notes"],settings:{theme:"edgerunners",frosted:true,panes:3},active:true,ratio:0.875,tags:[{id:1,label:"dev"},{id:2,label:"adhd"}]});run(true);};
+  inEl.addEventListener('input',function(){run(true);});
+  run(true);
+})();
+</script>
+</body>
+</html>

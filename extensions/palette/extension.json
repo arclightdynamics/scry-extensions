@@ -1,0 +1,15 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.palette",
+  "name": "Palette",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A color companion — pick a color, read hex/RGB/HSL, generate tints, shades and a harmony, and copy any value with a click.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": { "width": 420, "height": 560, "resizable": true },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

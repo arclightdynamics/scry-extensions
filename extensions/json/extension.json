@@ -1,0 +1,15 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.json",
+  "name": "JSON",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Format, validate, and minify JSON. Paste in, get pretty-printed output with error locations and a one-click copy.",
+  "author": "Scry",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": { "width": 720, "height": 560, "resizable": true },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}
