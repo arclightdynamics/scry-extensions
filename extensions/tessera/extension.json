@@ -1,0 +1,15 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.tessera",
+  "name": "Tessera",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "A polished falling-block puzzle — 7 modes, levels, original music, gamepad/touch, and a high-score leaderboard.",
+  "author": "Frank Cefalu",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": { "width": 900, "height": 760, "resizable": true },
+  "permissions": ["storage"],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

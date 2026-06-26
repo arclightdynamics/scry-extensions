@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Tessera</title>
+  <link rel="stylesheet" href="tessera.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== Playfield + rails ===== -->
+    <div id="stage">
+      <aside class="rail rail-left">
+        <div class="panel">
+          <div class="panel-k">Hold</div>
+          <canvas id="hold" width="120" height="96"></canvas>
+        </div>
+        <div class="panel stats">
+          <div class="stat"><span class="stat-k">Score</span><span class="stat-v" id="score">0</span></div>
+          <div class="stat"><span class="stat-k">Lines</span><span class="stat-v" id="lines">0</span></div>
+          <div class="stat"><span class="stat-k">Level</span><span class="stat-v" id="level">1</span></div>
+          <div class="stat"><span class="stat-k" id="clock-k">Time</span><span class="stat-v" id="clock">0:00</span></div>
+        </div>
+        <div class="panel statsx">
+          <div class="panel-k">Stats</div>
+          <div class="sx-row"><span class="sx-k">PPS</span><span class="sx-v" id="sx-pps">0.00</span></div>
+          <div class="sx-row"><span class="sx-k">Single</span><span class="sx-v" id="sx-single">0</span></div>
+          <div class="sx-row"><span class="sx-k">Double</span><span class="sx-v" id="sx-double">0</span></div>
+          <div class="sx-row"><span class="sx-k">Triple</span><span class="sx-v" id="sx-triple">0</span></div>
+          <div class="sx-row"><span class="sx-k">Tetris</span><span class="sx-v" id="sx-tetris">0</span></div>
+          <div class="sx-row"><span class="sx-k" title="mini / single / double / triple">T-spin</span><span class="sx-v" id="sx-ts">0/0/0/0</span></div>
+          <div class="sx-row"><span class="sx-k">Finesse</span><span class="sx-v" id="sx-fin">0</span></div>
+        </div>
+        <div class="panel combo" id="combo-panel">
+          <div class="combo-line" id="b2b" hidden>BACK-TO-BACK</div>
+          <div class="combo-line" id="combo" hidden>COMBO ×0</div>
+        </div>
+      </aside>
+
+      <div class="board-wrap">
+        <canvas id="board" width="300" height="600"></canvas>
+        <!-- toast popups (line names, t-spin, level up) -->
+        <div id="popups"></div>
+      </div>
+
+      <aside class="rail rail-right">
+        <div class="panel">
+          <div class="panel-k">Next</div>
+          <canvas id="next" width="120" height="380"></canvas>
+        </div>
+        <button class="mini-btn" id="btn-pause" title="Pause (Esc)">❚❚</button>
+        <button class="mini-btn" id="btn-mute" title="Mute (M)">♪</button>
+      </aside>
+    </div>
+
+    <!-- ===== Touch control bar (additive; hidden on desktop via @media coarse) ===== -->
+    <div id="touchbar" aria-hidden="true">
+      <button type="button" class="touch-btn" id="tbtn-hold" aria-label="Hold">HOLD</button>
+      <button type="button" class="touch-btn" id="tbtn-rot" aria-label="Rotate clockwise">▷</button>
+      <button type="button" class="touch-btn touch-btn-wide" id="tbtn-hard" aria-label="Hard drop">⤓ DROP</button>
+      <button type="button" class="touch-btn" id="tbtn-pause" aria-label="Pause">❚❚</button>
+    </div>
+
+    <!-- ===== Overlays ===== -->
+    <div class="overlay" id="ov-title">
+      <div class="brand">
+        <div class="logo">TESSERA</div>
+        <div class="tagline">stack · clear · ascend</div>
+      </div>
+      <div class="menu">
+        <button class="btn primary" data-mode="marathon">Marathon</button>
+        <button class="btn" data-mode="sprint">Sprint · 40L</button>
+        <button class="btn" data-mode="ultra">Ultra · 2:00</button>
+        <button class="btn" data-mode="cheese">Cheese · Dig</button>
+        <button class="btn" data-mode="master">Master · 20G</button>
+        <button class="btn" data-mode="daily">Daily · 40L</button>
+        <button class="btn" data-mode="zen">Zen</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="btn-leaderboard">Leaderboard</button>
+        <button class="btn ghost" id="btn-settings">Settings</button>
+        <button class="btn ghost" id="btn-howto">How to play</button>
+      </div>
+      <div class="legal">An original block-puzzle game. Not affiliated with or endorsed by any other product.</div>
+    </div>
+
+    <div class="overlay hidden" id="ov-pause">
+      <div class="card">
+        <h2>Paused</h2>
+        <div class="menu">
+          <button class="btn primary" id="btn-resume">Resume</button>
+          <button class="btn" id="btn-restart">Restart</button>
+          <button class="btn ghost" id="btn-pause-settings">Settings</button>
+          <button class="btn ghost" id="btn-quit">Quit to menu</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="ov-over">
+      <div class="card">
+        <h2 id="over-title">Game Over</h2>
+        <div class="over-stats" id="over-stats"></div>
+        <div class="hs-entry hidden" id="hs-entry">
+          <div class="hs-k">New high score — enter initials</div>
+          <div class="initials">
+            <input class="ini" maxlength="3" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="initials" />
+          </div>
+        </div>
+        <div class="menu">
+          <button class="btn primary" id="btn-again">Play again</button>
+          <button class="btn ghost" id="btn-over-share" hidden>Share result</button>
+          <button class="btn ghost" id="btn-over-board">Leaderboard</button>
+          <button class="btn ghost" id="btn-over-menu">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="ov-board">
+      <div class="card wide">
+        <h2>Leaderboard</h2>
+        <div class="tabs" id="board-tabs"></div>
+        <ol class="scores" id="scores"></ol>
+        <div class="menu"><button class="btn primary" id="btn-board-back">Back</button></div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="ov-settings">
+      <div class="card wide">
+        <h2>Settings</h2>
+        <div class="settings" id="settings-body"></div>
+        <div class="menu"><button class="btn primary" id="btn-settings-back">Back</button></div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="ov-howto">
+      <div class="card wide">
+        <h2>How to play</h2>
+        <div class="howto">
+          <div class="k">← →</div><div class="d">Move left / right</div>
+          <div class="k">↓</div><div class="d">Soft drop</div>
+          <div class="k">Space</div><div class="d">Hard drop</div>
+          <div class="k">↑ / X</div><div class="d">Rotate clockwise</div>
+          <div class="k">Z / Ctrl</div><div class="d">Rotate counter-clockwise</div>
+          <div class="k">A</div><div class="d">Rotate 180°</div>
+          <div class="k">C / Shift</div><div class="d">Hold</div>
+          <div class="k">Esc / P</div><div class="d">Pause</div>
+          <div class="k">M</div><div class="d">Mute</div>
+          <div class="k">R</div><div class="d">Restart</div>
+          <div class="k">🎮 Gamepad</div><div class="d">Controller supported (standard mapping)</div>
+          <div class="k">Settings</div><div class="d">Rebind any key · toggle Initial rotate/hold (IRS)</div>
+        </div>
+        <div class="howto-touch">
+          <div class="k">Swipe ◀ ▶</div><div class="d">Move</div>
+          <div class="k">Swipe ▼</div><div class="d">Soft drop</div>
+          <div class="k">Flick ▲</div><div class="d">Hard drop</div>
+          <div class="k">Tap</div><div class="d">Rotate CW</div>
+          <div class="k">Two-finger tap</div><div class="d">Rotate CCW</div>
+          <div class="k">Buttons</div><div class="d">Hold · Rotate · Drop · Pause (bottom bar)</div>
+        </div>
+        <div class="menu"><button class="btn primary" id="btn-howto-back">Back</button></div>
+      </div>
+    </div>
+
+    <div id="countdown" class="hidden"></div>
+  </div>
+  <script src="tessera.js"></script>
+</body>
+</html>
