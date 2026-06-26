@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-06-25T15:39:00Z",
+  "updated": "2026-06-26T17:00:01Z",
   "extensions": [
     {
       "id": "com.enterscry.aether",
@@ -14,7 +14,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.aether-1.0.0.zip",
-      "sha256": "9e66903e9a5e59fe1bb66d5b6c1bb416363e0da98b8f72f08b4b5d518870ed7f",
+      "sha256": "cc181cd1f35639af5fdef975ed576f66891970136c349106e92f5dbd4cd31cc5",
       "size": 2816997,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/aether/icon.svg"
     },
@@ -30,7 +30,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.clock-1.0.0.zip",
-      "sha256": "db0b57f747cdbf5f7d554a529aac77ccac348e30a4ff359e99836826553f5397",
+      "sha256": "8bb14932fb782a9c551b67b875291b95a44a64756315ae7c67ac6af14944323c",
       "size": 2194,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/clock/icon.svg"
     },
@@ -47,7 +47,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.convert-1.0.0.zip",
-      "sha256": "02b32791c6828ac9a0eba4edd96d41d218004f42b52f0db330d54378941458d7",
+      "sha256": "2d325aa3bc606cf834b1ec019a16f4a456e14bff2c7369b1c73df5184479f8c4",
       "size": 3296,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/convert/icon.svg"
     },
@@ -66,7 +66,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.imago-1.0.0.zip",
-      "sha256": "869f76cb2be53feb33fff626f0acc473a74a87a5ef892ddb875469f521205d86",
+      "sha256": "f99439fff2d456cdc2d0f0808fb621305abada0ed7c42dc05aff27c8c75f45a0",
       "size": 29477,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/imago/icon.svg"
     },
@@ -83,7 +83,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.json-1.0.0.zip",
-      "sha256": "4197da99e720cbc2e6e85647c1fec18f34aaf981b778d131e9412e117e2e839b",
+      "sha256": "3fec766b74c152f09f870dfd60ad5b3f1964cfc5cff7c0fd5b605ad9b1d28fda",
       "size": 3353,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/json/icon.svg"
     },
@@ -101,7 +101,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.mirage-1.0.0.zip",
-      "sha256": "3c77a11bd2cd999960da91645c64cd28cde250b3b494ef08e463045fd75df386",
+      "sha256": "2cd5e69d34249efec04c80ea6ea84459479691937222800f90446ca34c4599e7",
       "size": 48035,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/mirage/icon.svg"
     },
@@ -118,7 +118,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.notes-1.0.0.zip",
-      "sha256": "007cf452fd3ecff077fbd0539920cf6654567c523bac3fa5edba409b78205bfa",
+      "sha256": "b83ec7d7a9a84c00e67f299eb743a467365275e265d4e3239abcc390186c30e3",
       "size": 4559,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/notes/icon.svg"
     },
@@ -135,7 +135,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.palette-1.0.0.zip",
-      "sha256": "b06199e20e1c69cb2d08569d2e098a5558330b8269a001932f15379dbcd0231f",
+      "sha256": "7c7dd9c34ee4450a485455ea4a53abff1942e6f76a86a5afbf01ca0c9581ab01",
       "size": 3791,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/palette/icon.svg"
     },
@@ -152,9 +152,28 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.pomodoro-1.0.0.zip",
-      "sha256": "5e3741ed15226a0f1440805eaefe39b67cbff8d7cbbd981cd36f8ec18018ffa3",
+      "sha256": "415ea2f6f4e5b563421bd81eb9cd943a0f83ec03dac6845b13c71e8c8e367256",
       "size": 3400,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/pomodoro/icon.svg"
+    },
+    {
+      "id": "com.enterscry.tessera",
+      "name": "Tessera",
+      "version": "1.0.0",
+      "description": "A polished falling-block puzzle — 7 modes, levels, original music, gamepad/touch, and a high-score leaderboard.",
+      "author": "Frank Cefalu",
+      "surfaces": [
+        "pane",
+        "desktop.dock"
+      ],
+      "permissions": [
+        "storage"
+      ],
+      "minScryVersion": "1.0.0",
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.tessera-1.0.0.zip",
+      "sha256": "56ad0c34d17d70cb7c214da62481ebe4f7d4e1a70cc57e9a9e71cfa95c049820",
+      "size": 34085,
+      "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/tessera/icon.svg"
     }
   ]
 }
