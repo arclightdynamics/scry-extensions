@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Luac — Lua validator</title>
+  <link rel="stylesheet" href="luac.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== Toolbar ===== -->
+    <header class="bar">
+      <div class="brand">
+        <span class="logo">Luac</span>
+        <span class="tag">Lua validator</span>
+      </div>
+
+      <div class="controls">
+        <label class="ctl">
+          <span class="ctl-k">Dialect</span>
+          <select id="dialect" title="Lua language version to validate against">
+            <option value="5.1">Lua 5.1</option>
+            <option value="5.2">Lua 5.2</option>
+            <option value="5.3">Lua 5.3</option>
+            <option value="LuaJIT">LuaJIT</option>
+          </select>
+        </label>
+
+        <label class="ctl">
+          <span class="ctl-k">Sample</span>
+          <select id="sample" title="Load an example snippet">
+            <option value="">Load…</option>
+          </select>
+        </label>
+
+        <button class="btn" id="btn-copy" title="Copy the editor contents">Copy</button>
+        <button class="btn ghost" id="btn-clear" title="Clear the editor">Clear</button>
+
+        <span class="status" id="status" data-state="empty">Ready</span>
+      </div>
+    </header>
+
+    <!-- ===== Body: editor | results ===== -->
+    <main class="body">
+      <section class="editor" id="editor-pane">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"
+          autocorrect="off" wrap="off" placeholder="-- type or paste Lua here"></textarea>
+      </section>
+
+      <div class="divider" aria-hidden="true"></div>
+
+      <section class="results">
+        <div class="tabs" role="tablist">
+          <button class="tab active" id="tab-problems" role="tab" data-panel="panel-problems">
+            Problems <span class="count" id="problem-count">0</span>
+          </button>
+          <button class="tab" id="tab-ast" role="tab" data-panel="panel-ast">AST</button>
+        </div>
+
+        <div class="panel active" id="panel-problems" role="tabpanel">
+          <ul class="problems" id="problems"></ul>
+        </div>
+
+        <div class="panel" id="panel-ast" role="tabpanel">
+          <div class="ast-toolbar">
+            <button class="btn ghost sm" id="btn-ast-expand">Expand all</button>
+            <button class="btn ghost sm" id="btn-ast-collapse">Collapse all</button>
+          </div>
+          <div class="ast" id="ast"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Status bar ===== -->
+    <footer class="statusbar">
+      <span id="sb-pos">Ln 1, Col 1</span>
+      <span class="sep">·</span>
+      <span id="sb-lines">1 line</span>
+      <span class="grow"></span>
+      <span id="sb-time"></span>
+      <span class="sep" id="sb-sep" hidden>·</span>
+      <span id="sb-engine">luaparse</span>
+    </footer>
+  </div>
+
+  <script src="vendor/luaparse.js"></script>
+  <script src="luac.js"></script>
+</body>
+</html>

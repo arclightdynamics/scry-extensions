@@ -1,0 +1,15 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.luac",
+  "name": "Luac",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Validate Lua as you type — line/column syntax errors, 5.1/5.2/5.3/LuaJIT dialects, an AST inspector, and ready-made snippets.",
+  "author": "Frank Cefalu",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": { "width": 1040, "height": 720, "resizable": true },
+  "permissions": ["clipboard"],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}
