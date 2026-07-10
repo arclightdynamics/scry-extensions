@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- chronoflow: pixel-clock glyph over a flowing wave -->
+  <rect width="48" height="48" rx="10" fill="#05050a"/>
+  <path d="M4 34 Q 12 28, 20 33 T 36 32 T 48 30" stroke="#c8a8ff" stroke-opacity="0.35" stroke-width="2" fill="none"/>
+  <path d="M0 39 Q 10 34, 20 38 T 40 37 T 52 35" stroke="#c8a8ff" stroke-opacity="0.18" stroke-width="2" fill="none"/>
+  <!-- 1 -->
+  <rect x="12" y="14" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="12" y="18" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="12" y="22" width="3" height="3" fill="#e8e0ff"/>
+  <!-- : -->
+  <rect x="19" y="15" width="3" height="3" fill="#c8a8ff"/>
+  <rect x="19" y="21" width="3" height="3" fill="#c8a8ff"/>
+  <!-- 0 -->
+  <rect x="26" y="14" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="30" y="14" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="26" y="18" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="30" y="18" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="26" y="22" width="3" height="3" fill="#e8e0ff"/>
+  <rect x="30" y="22" width="3" height="3" fill="#e8e0ff"/>
+</svg>

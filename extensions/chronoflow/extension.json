@@ -1,0 +1,19 @@
+{
+  "$schema": "../../extension.schema.json",
+  "id": "com.enterscry.chronoflow",
+  "name": "Chronoflow",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "description": "Flowing ambient clock — plasma wave, parallax dots, and mood themes.",
+  "author": "Frank Cefalu",
+  "icon": "icon.svg",
+  "surfaces": ["pane", "desktop.dock"],
+  "panel": {
+    "width": 720,
+    "height": 460,
+    "resizable": true
+  },
+  "permissions": [],
+  "engine": "iframe",
+  "minScryVersion": "1.0.0"
+}

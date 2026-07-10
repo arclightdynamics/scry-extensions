@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>chronoflow</title>
+<style>
+  :root {
+    --accent: #c8a8ff;
+    --accent-soft: rgba(200,168,255,0.55);
+    --bg: #05050a;
+    --ink: #e8e0ff;
+  }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: var(--bg); overflow: hidden; cursor: none;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--ink);
+  }
+  body.active { cursor: default; }
+
+  #dots, #wave, #clockCanvas {
+    position: fixed; inset: 0; pointer-events: none;
+  }
+  #dots        { z-index: 1; }
+  #wave        { z-index: 2; }
+  #clockCanvas { z-index: 3; }
+
+  /* vignette + faint scanline overlay (drawn over the wave, under HUD) */
+  #vignette {
+    position: fixed; inset: 0; z-index: 4; pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.05) 3px),
+      radial-gradient(ellipse at center,
+        rgba(0,0,0,0) 50%,
+        rgba(0,0,0,0.55) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  #date {
+    position: fixed; left: 0; right: 0; bottom: 14vh; z-index: 5;
+    text-align: center; pointer-events: none; user-select: none;
+    font-size: clamp(9px, 1.2vw, 16px);
+    letter-spacing: 0.45em;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-shadow: 0 0 12px var(--accent-soft), 0 0 4px rgba(0,0,0,0.85);
+    transition: color 0.6s ease, text-shadow 0.6s ease;
+  }
+
+  /* HUD */
+  #hud {
+    position: fixed; inset: 0; z-index: 6;
+    pointer-events: none;
+    opacity: 0; transition: opacity 0.35s ease;
+  }
+  body.active #hud { opacity: 1; }
+
+  /* theme pill row (top center) */
+  #genres {
+    position: absolute; top: 10px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px;
+    pointer-events: auto;
+    background: rgba(8, 6, 22, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(180,160,255,0.22);
+    padding: 6px 10px;
+    border-radius: 999px;
+    max-width: 92vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #genres::-webkit-scrollbar { display: none; }
+  .gpill {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.25s ease;
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .gpill:hover { transform: scale(1.35); }
+  .gpill.active {
+    background: var(--pill);
+    border-color: var(--pill);
+    box-shadow: 0 0 10px var(--pill), 0 0 20px var(--pill);
+  }
+  .gpill .lbl {
+    position: absolute; top: 18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px; letter-spacing: 0.25em;
+    color: var(--ink);
+    background: rgba(8,6,22,0.85);
+    padding: 3px 6px; border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s ease;
+    text-transform: uppercase;
+  }
+  .gpill:hover .lbl { opacity: 1; }
+
+  /* controls — bottom center */
+  #controls {
+    position: absolute; left: 50%; bottom: 14px;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 8px;
+    pointer-events: auto;
+    background: rgba(8, 6, 22, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(180,160,255,0.22);
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+  #controls button {
+    background: transparent; border: 0; color: var(--ink);
+    font-size: 13px; cursor: pointer;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s, color 0.3s;
+  }
+  #controls button:hover { background: rgba(180,160,255,0.18); }
+  #genre-name {
+    color: var(--accent); letter-spacing: 0.32em;
+    font-size: 9px; text-transform: uppercase;
+    padding: 0 6px;
+    text-shadow: 0 0 6px var(--accent-soft);
+  }
+
+  /* compact tweaks for tiny embedded windows */
+  @media (max-width: 600px), (max-height: 420px) {
+    #genres { padding: 4px 8px; gap: 5px; }
+    .gpill { width: 8px; height: 8px; }
+    .gpill .lbl { font-size: 7px; top: 14px; }
+    #controls { gap: 6px; padding: 5px 8px; bottom: 8px; }
+    #controls button { width: 20px; height: 20px; font-size: 12px; }
+  }
+
+  /* theme toast — brief banner when changing via key/click */
+  #toast {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, calc(-50% - 18vh));
+    z-index: 7;
+    color: var(--accent);
+    font-size: clamp(10px, 1.4vw, 16px);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    text-shadow: 0 0 14px var(--accent-soft), 0 0 4px #000;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    background: rgba(8,6,22,0.7);
+    border: 1px solid var(--accent-soft);
+    padding: 8px 18px;
+    border-radius: 2px;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <canvas id="dots"></canvas>
+  <canvas id="wave"></canvas>
+  <canvas id="clockCanvas"></canvas>
+  <div id="vignette"></div>
+  <div id="date">—</div>
+  <div id="toast"></div>
+
+  <div id="hud">
+    <div id="genres"></div>
+    <div id="controls">
+      <button id="btn-prev" title="Previous theme">‹</button>
+      <span id="genre-name">LOFI</span>
+      <button id="btn-next" title="Next theme">›</button>
+    </div>
+  </div>
+
+<script>
+  // ---- THEMES ---------------------------------------------------------------
+  // Each entry: hue (0-1) for the wave palette and an accent color used for the
+  // clock/HUD tint. (These were music genres in the original standalone app —
+  // the YouTube stream backing them was dropped for the extension build, so
+  // they're pure color moods now.)
+  const GENRES = [
+    { id:'lofi',    label:'LO-FI',      hue:0.72, accent:[200,168,255] },
+    { id:'chill',   label:'CHILLHOP',   hue:0.08, accent:[255,184,136] },
+    { id:'synth',   label:'SYNTHWAVE',  hue:0.92, accent:[255,108,200] },
+    { id:'ambient', label:'AMBIENT',    hue:0.55, accent:[136,212,255] },
+    { id:'class',   label:'CLASSICAL',  hue:0.12, accent:[255,212,122] },
+    { id:'jazz',    label:'JAZZ',       hue:0.05, accent:[255,154,108] },
+    { id:'vapor',   label:'VAPORWAVE',  hue:0.85, accent:[255,139,224] },
+    { id:'nature',  label:'NATURE',     hue:0.38, accent:[154,232,184] },
+    { id:'mlofi',   label:'METAL LOFI', hue:0.99, accent:[255,90, 90] },
+    { id:'mjazz',   label:'DOOM',       hue:0.02, accent:[217,106, 74] },
+    { id:'sad',     label:'SAD',        hue:0.62, accent:[138,158,210] },
+  ];
+
+  let genreIdx = 0;
+  // localStorage throws in Scry's sandboxed extension frame (opaque origin) —
+  // the guards make theme persistence best-effort there.
+  try {
+    const saved = localStorage.getItem('chronoflow.genre');
+    const found = GENRES.findIndex(g => g.id === saved);
+    if (found >= 0) genreIdx = found;
+  } catch (_) {}
+
+  function applyAccent(g) {
+    const [r, gg, b] = g.accent;
+    document.documentElement.style.setProperty('--accent', `rgb(${r},${gg},${b})`);
+    document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${gg},${b},0.55)`);
+    document.getElementById('genre-name').textContent = g.label;
+    // pills
+    document.querySelectorAll('.gpill').forEach((el, i) => {
+      el.classList.toggle('active', i === genreIdx);
+    });
+  }
+
+  function switchGenre(idx) {
+    genreIdx = ((idx % GENRES.length) + GENRES.length) % GENRES.length;
+    const g = GENRES[genreIdx];
+    try { localStorage.setItem('chronoflow.genre', g.id); } catch (_) {}
+    applyAccent(g);
+    showToast(g.label);
+  }
+
+  // ---- HUD ------------------------------------------------------------------
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const toast   = document.getElementById('toast');
+
+  // build pill row
+  const pillRow = document.getElementById('genres');
+  GENRES.forEach((g, i) => {
+    const el = document.createElement('div');
+    el.className = 'gpill';
+    el.style.setProperty('--pill', `rgb(${g.accent[0]},${g.accent[1]},${g.accent[2]})`);
+    el.innerHTML = `<span class="lbl">${g.label}</span>`;
+    el.addEventListener('click', () => switchGenre(i));
+    pillRow.appendChild(el);
+  });
+
+  applyAccent(GENRES[genreIdx]);
+
+  btnPrev.addEventListener('click', () => switchGenre(genreIdx - 1));
+  btnNext.addEventListener('click', () => switchGenre(genreIdx + 1));
+
+  // keyboard: 1-9,0 to switch themes, ←/→ to cycle
+  window.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '9') switchGenre(parseInt(e.key, 10) - 1);
+    else if (e.key === '0' && GENRES.length >= 10) switchGenre(9);
+    else if (e.key === 'ArrowRight') switchGenre(genreIdx + 1);
+    else if (e.key === 'ArrowLeft')  switchGenre(genreIdx - 1);
+  });
+
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1100);
+  }
+
+  // mouse-move shows cursor + HUD; idle fades out
+  let lastMove = performance.now();
+  const onMove = () => { lastMove = performance.now(); document.body.classList.add('active'); };
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchstart', onMove);
+  setInterval(() => {
+    if (performance.now() - lastMove > 2500) document.body.classList.remove('active');
+  }, 400);
+
+  // ---- date label -----------------------------------------------------------
+  const dateEl = document.getElementById('date');
+  function fmtDate(d) {
+    return d.toLocaleDateString(undefined, {
+      weekday:'long', year:'numeric', month:'long', day:'numeric',
+    });
+  }
+
+  // ---- canvases -------------------------------------------------------------
+  const dotCvs = document.getElementById('dots');
+  const dotCtx = dotCvs.getContext('2d', { alpha: true });
+  const cvs    = document.getElementById('wave');
+  const ctx    = cvs.getContext('2d', { alpha: true });
+  const ccvs   = document.getElementById('clockCanvas');
+  const cctx   = ccvs.getContext('2d', { alpha: true });
+
+  let dpr = 1, W = 0, H = 0;
+  let CELL = 12, cols = 0, rows = 0;
+
+  function resizeAll() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    // adapt cell density to viewport — denser plasma on small screens
+    CELL = W < 600 ? 9 : (W < 1100 ? 12 : 14);
+    cols = Math.ceil(W / CELL);
+    rows = Math.ceil(H / CELL);
+    [dotCvs, cvs, ccvs].forEach((c, i) => {
+      c.width  = Math.floor(W * dpr);
+      c.height = Math.floor(H * dpr);
+      c.style.width  = W + 'px';
+      c.style.height = H + 'px';
+      const cx = c.getContext('2d');
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+    ctx.font = `${CELL}px ui-monospace, "SF Mono", Menlo, monospace`;
+    ctx.textBaseline = 'top';
+  }
+  window.addEventListener('resize', resizeAll);
+  resizeAll();
+
+  // ---- pixel font (4×5) -----------------------------------------------------
+  const DIGITS = {
+    '0': [' ## ', '#  #', '#  #', '#  #', ' ## '],
+    '1': ['  # ', ' ## ', '  # ', '  # ', ' ###'],
+    '2': [' ## ', '#  #', '   #', '  # ', '####'],
+    '3': ['### ', '   #', ' ## ', '   #', '### '],
+    '4': ['#  #', '#  #', '####', '   #', '   #'],
+    '5': ['####', '#   ', '### ', '   #', '### '],
+    '6': [' ## ', '#   ', '### ', '#  #', ' ## '],
+    '7': ['####', '   #', '  # ', '  # ', ' #  '],
+    '8': [' ## ', '#  #', ' ## ', '#  #', ' ## '],
+    '9': [' ## ', '#  #', ' ###', '   #', ' ## '],
+    ':': ['    ', ' ## ', '    ', ' ## ', '    '],
+    ' ': ['    ', '    ', '    ', '    ', '    '],
+    'A': [' ## ', '#  #', '####', '#  #', '#  #'],
+    'P': ['### ', '#  #', '### ', '#   ', '#   '],
+    'M': ['#  #', '####', '####', '#  #', '#  #'],
+  };
+
+  function fmtTime(d) {
+    let h = d.getHours();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    const m = String(d.getMinutes()).padStart(2,'0');
+    const s = String(d.getSeconds()).padStart(2,'0');
+    return `${h}:${m}:${s} ${ap}`;
+  }
+
+  // ---- parallax dot grid (3 depths) ----------------------------------------
+  // soft moving dot field that gives the background depth. Each layer drifts
+  // at a different speed.
+  const DOT_LAYERS = [
+    { sp: 26, alpha: 0.18, speed: 0.020, amp: 6  },
+    { sp: 18, alpha: 0.12, speed: 0.045, amp: 10 },
+    { sp: 12, alpha: 0.07, speed: 0.090, amp: 16 },
+  ];
+
+  function drawDots(t, beat, accent) {
+    dotCtx.clearRect(0, 0, W, H);
+    for (let li = 0; li < DOT_LAYERS.length; li++) {
+      const L = DOT_LAYERS[li];
+      const phase = t * L.speed;
+      const dx = Math.sin(phase * 1.3) * L.amp;
+      const dy = Math.cos(phase * 0.9) * L.amp * 0.7;
+      const a  = L.alpha * (0.85 + 0.4 * beat);
+      dotCtx.fillStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},${a.toFixed(3)})`;
+      const r = Math.max(1, Math.round(1.2 + li * 0.4));
+      // start offset so the grid drifts smoothly
+      const ox = ((dx % L.sp) + L.sp) % L.sp;
+      const oy = ((dy % L.sp) + L.sp) % L.sp;
+      for (let y = -L.sp + oy; y < H + L.sp; y += L.sp) {
+        for (let x = -L.sp + ox; x < W + L.sp; x += L.sp) {
+          // soft twinkle so the field feels alive
+          const tw = 0.65 + 0.35 * Math.sin(phase * 4 + x * 0.013 + y * 0.017);
+          dotCtx.globalAlpha = tw;
+          dotCtx.beginPath();
+          dotCtx.arc(x, y, r, 0, Math.PI * 2);
+          dotCtx.fill();
+        }
+      }
+      dotCtx.globalAlpha = 1;
+    }
+  }
+
+  // ---- liquid plasma wave ---------------------------------------------------
+  const WAVE = ' .·:-=+*#';
+  function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const hk = (n) => {
+        let tk = h + n; if (tk < 0) tk += 1; if (tk > 1) tk -= 1;
+        if (tk < 1/6) return p + (q - p) * 6 * tk;
+        if (tk < 1/2) return q;
+        if (tk < 2/3) return p + (q - p) * (2/3 - tk) * 6;
+        return p;
+      };
+      r = hk(1/3); g = hk(0); b = hk(-1/3);
+    }
+    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+  }
+
+  function drawWave(t, pt, beat, baseHue) {
+    // gentle trail; lower alpha so the dot grid remains visible
+    ctx.fillStyle = `rgba(5, 5, 12, ${0.20 - 0.07 * beat})`;
+    ctx.fillRect(0, 0, W, H);
+
+    const amp  = 1.0 + 0.95 * beat;
+    const flow = 0.85 + 0.6 * beat;
+    const tt   = t * flow + pt * 0.12;
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const v =
+          Math.sin(x * 0.10 + tt * 0.8) +
+          Math.sin(y * 0.22 - tt * 0.5) +
+          Math.sin((x * 0.55 + y) * 0.07 + tt * 0.32);
+        const n = Math.max(0, Math.min(1, (v * amp + 3) / 6));
+        if (n < 0.42) continue;
+        const ch = WAVE[Math.floor(n * (WAVE.length - 1))];
+        if (ch === ' ') continue;
+
+        const hue = (baseHue + 0.10 * Math.sin(tt * 0.07 + x * 0.011 + y * 0.019)
+                            + 0.05 * beat) % 1.0;
+        const L   = Math.min(0.92, 0.12 + n * 0.5);
+        const [r, g, bl] = hslToRgb((hue + 1) % 1, 0.78, L);
+        const a = 0.20 + 0.36 * (n - 0.42) + 0.22 * beat;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${a.toFixed(3)})`;
+        ctx.fillText(ch, x * CELL, y * CELL);
+      }
+    }
+  }
+
+  // ---- clock + halo ---------------------------------------------------------
+  function drawClock(beat, accent) {
+    cctx.clearRect(0, 0, W, H);
+    const text = fmtTime(new Date());
+    const charW = 4, charH = 5, spacer = 1;
+    const totalCols = text.length * (charW + spacer) - spacer;
+
+    // size budget shrinks for small embedded windows
+    const widthBudget  = W < 600 ? 0.86 : 0.72;
+    const heightBudget = H < 420 ? 0.26 : 0.30;
+    const blockByW = (W * widthBudget)  / totalCols;
+    const blockByH = (H * heightBudget) / charH;
+    const block = Math.max(4, Math.floor(Math.min(blockByW, blockByH)));
+    const gap   = Math.max(1, Math.floor(block * 0.10));
+
+    const w = totalCols * block;
+    const h = charH * block;
+    const x0 = Math.floor((W - w) / 2);
+    const y0 = Math.floor((H - h) / 2) - Math.floor(H * 0.04);
+
+    // beat-driven radial halo
+    const padX = block * 2.5, padY = block * 1.6;
+    const grad = cctx.createRadialGradient(
+      x0 + w/2, y0 + h/2, 0,
+      x0 + w/2, y0 + h/2, Math.max(w, h)
+    );
+    const [ar, ag, ab] = accent;
+    grad.addColorStop(0,   `rgba(${ar*0.35|0}, ${ag*0.30|0}, ${ab*0.40|0}, ${0.55 + 0.18*beat})`);
+    grad.addColorStop(0.55,`rgba(${ar*0.25|0}, ${ag*0.20|0}, ${ab*0.32|0}, ${0.22 + 0.10*beat})`);
+    grad.addColorStop(1,   `rgba(10, 6, 28, 0)`);
+    cctx.fillStyle = grad;
+    cctx.fillRect(x0 - padX*2, y0 - padY*2, w + padX*4, h + padY*4);
+
+    // outer accent glow
+    cctx.fillStyle = `rgba(${ar}, ${ag}, ${ab}, ${0.16 + 0.26*beat})`;
+    for (let i = 0; i < text.length; i++) {
+      const glyph = DIGITS[text[i]] || DIGITS[' '];
+      const cx = x0 + i * (charW + spacer) * block;
+      for (let r = 0; r < charH; r++) {
+        for (let c = 0; c < charW; c++) {
+          if (glyph[r][c] === '#') {
+            cctx.fillRect(cx + c*block - 2, y0 + r*block - 2, block + 3, block + 3);
+          }
+        }
+      }
+    }
+
+    // bright pixel core — accent-tinted toward white
+    const tint = 0.55 + 0.30 * beat; // toward white on beat
+    const cr = Math.min(255, Math.round(ar + (255 - ar) * tint));
+    const cg = Math.min(255, Math.round(ag + (255 - ag) * tint));
+    const cb = Math.min(255, Math.round(ab + (255 - ab) * tint));
+    cctx.fillStyle = `rgba(${cr},${cg},${cb},0.97)`;
+    for (let i = 0; i < text.length; i++) {
+      const glyph = DIGITS[text[i]] || DIGITS[' '];
+      const cx = x0 + i * (charW + spacer) * block;
+      for (let r = 0; r < charH; r++) {
+        for (let c = 0; c < charW; c++) {
+          if (glyph[r][c] === '#') {
+            cctx.fillRect(cx + c*block, y0 + r*block, block - gap, block - gap);
+          }
+        }
+      }
+    }
+
+    // place the date label just below
+    const dateY = y0 + h + Math.max(14, block * 1.0);
+    dateEl.style.bottom = 'auto';
+    dateEl.style.top = `${dateY}px`;
+    dateEl.textContent = fmtDate(new Date());
+  }
+
+  // ---- pseudo-beat ----------------------------------------------------------
+  // Originally driven by YouTube playback time; now the animation clock feeds
+  // the same interference pattern so the halo/wave still breathe.
+  let beat = 0;
+  function reactivity(t) {
+    const pt = t;
+    const k = Math.max(
+      Math.sin(pt * 9.4),
+      Math.sin(pt * 7.1 + 1.3) * 0.85,
+      Math.sin(pt * 11.7 + 2.9) * 0.7,
+    );
+    const target = Math.max(0, k);
+    if (target > beat) beat += (target - beat) * 0.45;
+    else               beat += (target - beat) * 0.06;
+    return { pt, beat };
+  }
+
+  function frame(now) {
+    const t = now / 1000;
+    const { pt, beat: b } = reactivity(t);
+    const g = GENRES[genreIdx];
+    drawDots(t, b, g.accent);
+    drawWave(t, pt, b, g.hue);
+    drawClock(b, g.accent);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
