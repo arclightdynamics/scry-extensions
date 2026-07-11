@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-07-10T21:35:36Z",
+  "updated": "2026-07-11T21:04:55Z",
   "extensions": [
     {
       "id": "com.enterscry.aether",
@@ -14,25 +14,27 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.aether-1.0.0.zip",
-      "sha256": "9459af301ca30ec9afa92953bc4954b11e81c274b36adf8f8c5949127705e8ff",
+      "sha256": "3df2c540f7c1575bc58de10043380e89280d65e8b649ac69a80c3b74db32d5b1",
       "size": 2816997,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/aether/icon.svg"
     },
     {
       "id": "com.enterscry.chronoflow",
       "name": "Chronoflow",
-      "version": "1.0.0",
-      "description": "Flowing ambient clock — plasma wave, parallax dots, and mood themes.",
+      "version": "1.1.0",
+      "description": "Flowing ambient clock — plasma wave, parallax dots, mood themes, and lo-fi YouTube radio.",
       "author": "Frank Cefalu",
       "surfaces": [
         "pane",
         "desktop.dock"
       ],
-      "permissions": [],
+      "permissions": [
+        "embeds"
+      ],
       "minScryVersion": "1.0.0",
-      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.chronoflow-1.0.0.zip",
-      "sha256": "05f1ac74ec8da789a43f479edfdaf37cde6dc81e49f337bc6238349835284dbe",
-      "size": 7600,
+      "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.chronoflow-1.1.0.zip",
+      "sha256": "c30f676fe4519fbaedb57ee09eb615961734ebbb4bf676ca012cfcd48466b130",
+      "size": 11511,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/chronoflow/icon.svg"
     },
     {
@@ -47,7 +49,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.clock-1.0.0.zip",
-      "sha256": "06613343fb7ff137e29811b78a1f4a86fb6aac1c107874a869327dfbbf6028ff",
+      "sha256": "d4fbf07b824851b40a7a2e9156d461dd78b9024c23b359853634af11a7421e71",
       "size": 2194,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/clock/icon.svg"
     },
@@ -64,7 +66,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.convert-1.0.0.zip",
-      "sha256": "b3e616b9e829813baef80d582b8752f23f71c6df3792382071cd6323fe690a96",
+      "sha256": "57a5dda68d399e505c87a395a59eb9e5494fdf19b95749f23a9e7d4ac849abe2",
       "size": 3296,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/convert/icon.svg"
     },
@@ -83,7 +85,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.imago-1.0.0.zip",
-      "sha256": "83cd0af320e51e5582736a5f6192fdb09ea678d3ecc622be893af655b739da9f",
+      "sha256": "254e45493aaa1f427fd7a9b315ef0e2c1fdb7f83b604afaea5778873f2a35b4d",
       "size": 29477,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/imago/icon.svg"
     },
@@ -100,7 +102,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.json-1.0.0.zip",
-      "sha256": "de5c222c2190fb69479ebf6603d81e0c1167b4119baefe578e5e9c2fefde290a",
+      "sha256": "f8f324f22fc7ee745827db767835eefd9343d9c0e01214a43c3fd7ab832d4168",
       "size": 3353,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/json/icon.svg"
     },
@@ -119,7 +121,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.luac-1.0.0.zip",
-      "sha256": "158308056c1435741c36f0d0512e0e1b2ffeb08869f23d25404c25ab1599c9c3",
+      "sha256": "bcd221f67214165ac359aee0dc7950946214258c1b6459b55f61a478cd42364c",
       "size": 28985,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/luac/icon.svg"
     },
@@ -137,7 +139,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.mirage-1.0.0.zip",
-      "sha256": "84fd7b67afe6283e84e58ed2c6c1af6c04678c598a961b398283b5ccc72a81e0",
+      "sha256": "dc17d7eb60b4fe77a07afa7e25bc796e2c85b76ec67b113e5d78e323679d1651",
       "size": 48035,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/mirage/icon.svg"
     },
@@ -154,7 +156,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.notes-1.0.0.zip",
-      "sha256": "7440b9ffcf9c4885dacd7b7affcb7543611deea40f01a3a5e518c9273222f4f5",
+      "sha256": "68d12faa23197337b5ed70ce9238a9484c30818a9a05d6a3da57216a320f0063",
       "size": 4559,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/notes/icon.svg"
     },
@@ -171,7 +173,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.palette-1.0.0.zip",
-      "sha256": "45baffed82d83ea7e3a9af2f51985bafd803bf7d6aca1176472502ff513c5002",
+      "sha256": "34ad7d0db2508d49a95d2055eace2d3645aafbb8aff7d0c209efec1aa3d574df",
       "size": 3791,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/palette/icon.svg"
     },
@@ -188,7 +190,7 @@
       "permissions": [],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.pomodoro-1.0.0.zip",
-      "sha256": "91e76eee8ce3ae523667d9d7fcfc4a4e55a18d04a35f7ca035e7b1ff122a89e8",
+      "sha256": "a0010832e144f5d551cd6c4fb8b19030f19921bcff8a6dec70f5aa8b6de3e9f9",
       "size": 3400,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/pomodoro/icon.svg"
     },
@@ -207,7 +209,7 @@
       ],
       "minScryVersion": "1.0.0",
       "url": "https://github.com/arclightdynamics/scry-extensions/releases/latest/download/com.enterscry.tessera-1.0.0.zip",
-      "sha256": "5c0ff271efd02c6fc9006cf4f5237ecd6616662ba436b0374e83a6c566fb949e",
+      "sha256": "0a53ea03402ebf012fed53cafd5fc77520848a5a3bd2b564242d14b7e1e3aa66",
       "size": 34085,
       "iconUrl": "https://raw.githubusercontent.com/arclightdynamics/scry-extensions/main/extensions/tessera/icon.svg"
     }
