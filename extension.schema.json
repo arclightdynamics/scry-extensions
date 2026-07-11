@@ -83,7 +83,8 @@
           "storage",
           "downloads",
           "popups",
-          "modals"
+          "modals",
+          "embeds"
         ]
       },
       "uniqueItems": true
