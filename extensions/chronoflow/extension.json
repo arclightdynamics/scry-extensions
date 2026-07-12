@@ -2,7 +2,7 @@
   "$schema": "../extension.schema.json",
   "id": "com.enterscry.chronoflow",
   "name": "Chronoflow",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "entry": "index.html",
   "description": "Flowing ambient clock — plasma wave, parallax dots, mood themes, and lo-fi YouTube radio.",
   "author": "Frank Cefalu",
@@ -15,5 +15,5 @@
   },
   "permissions": ["embeds"],
   "engine": "iframe",
-  "minScryVersion": "1.0.0"
+  "minScryVersion": "1.0.10"
 }
